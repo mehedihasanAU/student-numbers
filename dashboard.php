@@ -662,14 +662,15 @@
             </div>`;
             }
             // Trigger session label fetch for visible cards
-            fetchSessionLabels();
+            // Disabled temporarily to prevent HTTP 500 (Server Flood)
+            // fetchSessionLabels();
 
             if (document.getElementById("kpiUnits")) document.getElementById("kpiUnits").innerText = unitCount.toLocaleString();
 
             async function fetchSessionLabels() {
                 const labels = document.querySelectorAll('.session-label');
                 const queue = Array.from(labels).filter(l => !l.dataset.loaded);
-                
+
                 // Process in small chunks to avoid flooding
                 const CHUNK_SIZE = 5;
                 for (let i = 0; i < queue.length; i += CHUNK_SIZE) {
@@ -677,12 +678,12 @@
                     await Promise.all(chunk.map(async (el) => {
                         const id = el.dataset.groupId;
                         if (!id) return;
-                        
+
                         try {
                             // Call our proxy script
                             const res = await fetch(`scheduled_unit_sessions.php?id=${id}`);
                             const json = await res.json();
-                            
+
                             // Expecting json to be an array of sessions. 
                             // We grab the first 'session_subject' that matches? 
                             // Or just the first one if it's the group ID.
