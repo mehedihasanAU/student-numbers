@@ -538,9 +538,19 @@
                         else if (g.campus === 'SYD') totalSyd += g.enrolled_count;
                         else if (g.campus === 'COMB') totalComb += g.enrolled_count;
 
+                        // Risk Logic (Low Enrolment <= 10)
+                        if (g.enrolled_count > 0 && g.enrolled_count <= 10) {
+                            riskItems.push({
+                                unitCode,
+                                grpLabel: `Group ${g.id}`,
+                                blockName: blockName,
+                                campus: g.campus,
+                                count: g.enrolled_count
+                            });
+                        }
+
                         return {
-                            ...g,
-                            label: `Group (ID: ${g.id || 'N/A'})` // Can be refined if we have 'Group 1' etc from name
+                            ...g, label: `Group (ID: ${g.id || 'N/A'})` // Can be refined if we have 'Group 1' etc from name
                         };
                     });
 
