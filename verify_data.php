@@ -63,11 +63,22 @@ function getCombinedScheduledUnits($config)
     }
     curl_multi_close($mh);
 
+    echo "Total raw units fetched: " . count($allUnits) . "\n";
+    if (count($allUnits) > 0) {
+        echo "Sample Unit Start:\n";
+        print_r($allUnits[0]);
+        echo "Sample Unit End\n";
+    }
+
     // Extract strictly the IDs
     $ids = [];
     foreach ($allUnits as $unit) {
         if (isset($unit['id'])) {
             $ids[] = $unit['id'];
+        } elseif (isset($unit['Id'])) {
+            $ids[] = $unit['Id'];
+        } elseif (isset($unit['scheduledUnitId'])) {
+            $ids[] = $unit['scheduledUnitId'];
         }
     }
     return array_unique($ids);
