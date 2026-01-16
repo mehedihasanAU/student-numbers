@@ -9,68 +9,96 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>Enrolment Insights</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            --aihe-green: #036A37;
-            --aihe-green-soft: rgba(3, 106, 55, 0.08);
-            --bg-body: #f5f7fa;
-            --card-border: rgba(0, 0, 0, 0.06);
+            --aih-green-primary: #256B37;
+            --aih-green-dark: #034f27;
+            --aih-green-light: #B0D8A1;
+            --aih-text-dark: #404040;
+            --aih-bg-light: #f9fafb;
+            --card-border: rgba(0, 0, 0, 0.08);
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-body);
-            color: #1f2937;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--aih-bg-light);
+            color: var(--aih-text-dark);
+            -webkit-font-smoothing: antialiased;
         }
 
         .navbar {
             background: #fff;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            border-bottom: 2px solid var(--aih-green-primary);
+            box-shadow: 0 4px 12px rgba(37, 107, 55, 0.05);
         }
 
         .navbar-brand {
-            color: #111 !important;
+            color: var(--aih-text-dark) !important;
             font-weight: 700;
             letter-spacing: -0.5px;
+            font-size: 1.25rem;
+        }
+
+        .btn-primary {
+            background-color: var(--aih-green-primary);
+            border-color: var(--aih-green-primary);
+            border-radius: 2px; /* Sharp corners per brand */
+            font-weight: 600;
+            padding: 8px 20px;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--aih-green-dark);
+            border-color: var(--aih-green-dark);
         }
 
         .card {
             border: 1px solid var(--card-border);
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02), 0 8px 16px rgba(0, 0, 0, 0.02);
+            border-radius: 4px; /* Slightly sharper */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             background: #fff;
         }
 
         .card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), 0 12px 24px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+            border-color: var(--aih-green-light);
         }
 
         .unit-code {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #111;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--aih-green-primary);
         }
 
         .unit-total {
             font-size: 0.9rem;
+            font-weight: 700;
+            color: #fff;
+            background: var(--aih-green-primary);
+            padding: 4px 12px;
+            border-radius: 2px;
+        }
+        
+        .nav-pills .nav-link.active {
+            background-color: var(--aih-green-primary);
+            border-radius: 2px;
+        }
+        
+        .nav-pills .nav-link {
+            color: var(--aih-text-dark);
             font-weight: 600;
-            color: var(--aihe-green);
-            background: var(--aihe-green-soft);
-            padding: 4px 10px;
-            border-radius: 20px;
         }
 
         .block-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #f3f4f6;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
         }
 
         .block-row:last-child {
@@ -78,58 +106,66 @@
         }
 
         .block-name {
-            font-weight: 500;
-            font-size: 0.95rem;
-            color: #4b5563;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--aih-text-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .lecturer-name {
             font-size: 0.8rem;
-            color: #6b7280;
-            font-style: italic;
+            color: #666;
+            font-weight: 500;
+            display: inline-block;
+            background: #f3f4f6;
+            padding: 2px 8px;
+            border-radius: 4px;
         }
 
         .campus-badge {
-            font-size: 0.8rem;
-            font-weight: 600;
-            padding: 2px 8px;
-            border-radius: 6px;
-            margin-left: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 2px;
+            text-transform: uppercase;
         }
 
         .badge-mel {
             background: #e0f2fe;
             color: #0369a1;
+            border: 1px solid #bae6fd;
         }
 
         .badge-syd {
             background: #fce7f3;
             color: #be185d;
+            border: 1px solid #fbcfe8;
         }
 
         .badge-comb {
             background: #f3e8ff;
             color: #7e22ce;
+            border: 1px solid #e9d5ff;
         }
 
         .search-input {
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
+            border-radius: 2px;
+            border: 1px solid #d1d5db;
             padding: 10px 16px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
 
         .search-input:focus {
-            border-color: var(--aihe-green);
-            box-shadow: 0 0 0 3px var(--aihe-green-soft);
+            border-color: var(--aih-green-primary);
+            box-shadow: 0 0 0 2px var(--aih-green-light);
         }
 
         /* Loader */
         .loader-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(4px);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(2px);
             z-index: 1000;
             display: flex;
             align-items: center;
@@ -141,7 +177,11 @@
             height: 6px;
             margin-top: 4px;
             border-radius: 3px;
-            background-color: #e5e7eb;
+            background-color: #f3f4f6;
+        }
+        
+        .progress-bar {
+            border-radius: 3px;
         }
     </style>
 </head>
