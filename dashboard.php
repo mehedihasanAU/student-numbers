@@ -433,73 +433,76 @@
 
         function render(data) {
             if (!data) return;
-            const detailed = data.campus_breakdown_detail || {};
-            const unitMeta = data.meta || {};
-            const unitDetails = data.unit_details || {};
+            // Prefer detailed_groups if available, else fallback (though we expect backend to send it)
+            const unitGroups = data.detailed_groups || {};
             const expectedGroups = data.groups || [];
 
             let unitCount = 0;
             let totalScheduledGroups = expectedGroups.length || 0;
             const cards = [];
-            const activeUnitCodes = new Set();
-            const riskItems = [];
 
             const search = document.getElementById("searchInput") ? document.getElementById("searchInput").value.trim().toLowerCase() : "";
 
-            // Identify High-Level Risks from risk_data for Sidebar
-            // Note: Currently sidebar only does Low Enrolment. We can add more later.
-
-            for (const [unitCode, blocks] of Object.entries(detailed)) {
+            // Iterate Units
+            for (const [unitCode, blocks] of Object.entries(unitGroups)) {
                 if (unitCode === "MATERIAL_FEE") continue;
-                let unitTotal = 0;
-                const blockList = [];
 
+                let unitTotal = 0;
                 let totalMel = 0;
                 let totalSyd = 0;
                 let totalComb = 0;
 
-                for (const [blockName, campuses] of Object.entries(blocks)) {
-                    const mel = campuses["MEL"] || 0;
-                    const syd = campuses["SYD"] || 0;
-                    const comb = campuses["COMB"] || 0;
-                    const subTotal = mel + syd + comb;
-                    unitTotal += subTotal;
-                    totalMel += mel;
-                    totalSyd += syd;
-                    totalComb += comb;
+                const blockList = [];
 
-                    // Fetch Details (Lecturer, Capacity)
-                    const details = (unitDetails[unitCode] && unitDetails[unitCode][blockName]) ? unitDetails[unitCode][blockName] : {};
+                // Iterate Blocks
+                for (const [blockName, groups] of Object.entries(blocks)) {
+                    // groups is an array of Group Objects
+                    // Sort groups by Campus (MEL, SYD, COMB) then Lecturer
+                    groups.sort((a, b) => {
+                        if (a.campus !== b.campus) return a.campus.localeCompare(b.campus);
+                        return (a.lecturer || "").localeCompare(b.lecturer || "");
+                    });
+
+                    let blockTotal = 0;
+
+                    // Process groups for display
+                    const displayGroups = groups.map(g => {
+                        unitTotal += g.enrolled_count;
+                        blockTotal += g.enrolled_count;
+
+                        if (g.campus === 'MEL') totalMel += g.enrolled_count;
+                        else if (g.campus === 'SYD') totalSyd += g.enrolled_count;
+                        else if (g.campus === 'COMB') totalComb += g.enrolled_count;
+
+                        return {
+                            ...g,
+                            label: `Group (ID: ${g.id || 'N/A'})` // Can be refined if we have 'Group 1' etc from name
+                        };
+                    });
 
                     blockList.push({
                         name: blockName,
-                        mel, syd, comb,
-                        total: subTotal,
-                        lecturer: details.lecturer || null,
-                        capacity: details.capacity || 0
+                        groups: displayGroups,
+                        total: blockTotal
                     });
-
-                    // Risk Logic (<= 10)
-                    if (mel > 0 && mel <= 10) riskItems.push({ unitCode, grpLabel: getGroupLabel(blockName), blockName, campus: "MEL", count: mel });
-                    if (syd > 0 && syd <= 10) riskItems.push({ unitCode, grpLabel: getGroupLabel(blockName), blockName, campus: "SYD", count: syd });
-                    if (comb > 0 && comb <= 10) riskItems.push({ unitCode, grpLabel: getGroupLabel(blockName), blockName, campus: "COMB", count: comb });
                 }
 
-                grandTotal = data.unique_students; // Use API provided total
-                unitCount++;
-                activeUnitCodes.add(unitCode);
-
+                // Search Filter
                 const hay = (unitCode + " " + blockList.map(b => b.name).join(" ")).toLowerCase();
                 if (search && !hay.includes(search)) continue;
 
+                unitCount++;
+
+                // Sort blocks chronologically
                 blockList.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+
                 cards.push({ unitCode, unitTotal, blockList, breakdown: { mel: totalMel, syd: totalSyd, comb: totalComb } });
             }
 
             cards.sort((a, b) => b.unitTotal - a.unitTotal);
 
             // KPIs
-            const totalUnique = (data.unique_students || 0);
+            const totalUnique = (data.unique_student_count || 0); // Corrected key from backend
             const sCounts = data.status_counts || { Enrolled: 0, Other: 0 };
             const kpiEl = document.getElementById("kpiUnique");
             if (kpiEl) {
@@ -513,7 +516,6 @@
             </div>`;
             }
             if (document.getElementById("kpiUnits")) document.getElementById("kpiUnits").innerText = unitCount.toLocaleString();
-            if (document.getElementById("kpiGroups")) document.getElementById("kpiGroups").innerText = totalScheduledGroups.toLocaleString();
 
             // Render Cards
             const grid = document.getElementById("cardsGrid");
@@ -524,43 +526,50 @@
                 } else {
                     cards.forEach(card => {
                         const blockHtml = card.blockList.map(b => {
-                            const warn = (n) => (n <= 10) ? ' <span class="text-danger fw-bold">!</span>' : '';
 
-                            // Lecturer & Capacity UI
-                            let metaHtml = "";
-                            if (b.lecturer) metaHtml += `<div class="lecturer-name mb-1">👨‍🏫 ${b.lecturer}</div>`;
+                            // Render Groups
+                            const groupsHtml = b.groups.map(g => {
+                                const warn = (g.enrolled_count <= 10) ? ' <span class="text-danger fw-bold">!</span>' : '';
+                                const campusClass = g.campus === 'MEL' ? 'badge-mel' : (g.campus === 'SYD' ? 'badge-syd' : 'badge-comb');
+                                const lecturer = g.lecturer ? ` - <span class="text-muted fst-italic">${g.lecturer}</span>` : '';
 
-                            // Progress Bar
-                            let progHtml = "";
-                            if (b.capacity > 0) {
-                                const pct = Math.min(100, Math.round((b.total / b.capacity) * 100));
-                                let color = "bg-primary";
-                                if (pct > 90) color = "bg-danger";
-                                else if (pct > 75) color = "bg-warning";
-                                else if (pct < 30) color = "bg-info";
+                                // Capacity Bar
+                                let progHtml = "";
+                                if (g.capacity > 0) {
+                                    const pct = Math.min(100, Math.round((g.enrolled_count / g.capacity) * 100));
+                                    let color = "bg-primary";
+                                    if (pct > 90) color = "bg-danger";
+                                    else if (pct > 75) color = "bg-warning";
+                                    else if (pct < 30) color = "bg-info";
 
-                                progHtml = `
-                                <div class="d-flex align-items-center gap-2 mt-1 mb-2" style="font-size:0.7rem;">
-                                    <div class="progress flex-grow-1" style="height:6px;">
-                                        <div class="progress-bar ${color}" role="progressbar" style="width: ${pct}%"></div>
+                                    progHtml = `
+                                    <div class="d-flex align-items-center gap-2 mt-1" style="font-size:0.75rem;">
+                                        <div class="progress flex-grow-1" style="height:6px;">
+                                            <div class="progress-bar ${color}" role="progressbar" style="width: ${pct}%"></div>
+                                        </div>
+                                        <span class="fw-bold text-dark">${g.enrolled_count}/${g.capacity}</span>
+                                    </div>`;
+                                }
+
+                                return `
+                                <div class="mb-2 pb-2 border-bottom border-light">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <span class="campus-badge ${campusClass}">${g.campus}</span>
+                                            <span class="small fw-bold ms-1 text-dark">${g.enrolled_count} students</span>
+                                            ${warn}
+                                            <span class="small">${lecturer}</span>
+                                        </div>
                                     </div>
-                                    <span class="text-muted">${b.total}/${b.capacity}</span>
+                                    ${progHtml}
                                 </div>`;
-                            }
+                            }).join("");
 
                             return `
-                            <div class="block-row align-items-start">
-                                <div style="flex:1">
-                                    <div class="d-flex justify-content-between">
-                                         <span class="block-name">${b.name}</span>
-                                    </div>
-                                    ${metaHtml}
-                                    ${progHtml}
-                                </div>
-                                <div class="ms-2 text-end">
-                                    ${b.mel > 0 ? `<div class="mb-1"><span class="campus-badge badge-mel">MEL: ${b.mel}${warn(b.mel)}</span></div>` : ''}
-                                    ${b.syd > 0 ? `<div class="mb-1"><span class="campus-badge badge-syd">SYD: ${b.syd}${warn(b.syd)}</span></div>` : ''}
-                                    ${b.comb > 0 ? `<div class="mb-1"><span class="campus-badge badge-comb">COMB: ${b.comb}${warn(b.comb)}</span></div>` : ''}
+                            <div class="block-section mb-3">
+                                <div class="fw-bold text-secondary small text-uppercase mb-2" style="letter-spacing:0.5px;">${b.name}</div>
+                                <div class="ps-2 border-start border-3 border-light">
+                                    ${groupsHtml}
                                 </div>
                             </div>
                         `;
@@ -585,7 +594,7 @@
                                 <span class="unit-total">${card.unitTotal} Students</span>
                             </div>
                             ${summaryHtml}
-                            <div class="mt-2 text-start small">
+                            <div class="mt-3 text-start small">
                                 ${blockHtml}
                             </div>
                         </div>
