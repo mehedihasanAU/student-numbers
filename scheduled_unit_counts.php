@@ -483,25 +483,21 @@ function fetchAndParseReport($baseUrl, $user, $pw)
         }
     }
 
-    return [
-        'counts' => $counts,
-        'detailed' => $detailedCounts,
-        'meta' => $unitMeta,
-        'unique_student_count' => count($uniqueStudents),
-        'status_counts' => $statusCounts,
     // structured_groups: [UnitCode][Block][] = {GroupObject}
     $structuredGroups = [];
     foreach ($granularGroups as $g) {
         $u = $g['unit_code'];
         $b = $g['block'];
-        if (!isset($structuredGroups[$u])) $structuredGroups[$u] = [];
-        if (!isset($structuredGroups[$u][$b])) $structuredGroups[$u][$b] = [];
+        if (!isset($structuredGroups[$u]))
+            $structuredGroups[$u] = [];
+        if (!isset($structuredGroups[$u][$b]))
+            $structuredGroups[$u][$b] = [];
         $structuredGroups[$u][$b][] = $g;
     }
 
     return [
         'counts' => $counts,
-        'detailed' => $detailedCounts, // Keep for backward compat if needed
+        'detailed' => $detailedCounts,
         'meta' => $unitMeta,
         'unique_student_count' => count($uniqueStudents),
         'status_counts' => $statusCounts,
