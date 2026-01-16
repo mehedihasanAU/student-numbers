@@ -407,6 +407,7 @@ foreach ($unitList as $id => $payload) {
     // The previous logic had a "pending" mechanism. We can remove that since we fetch ALL at once now.
 
     $currentParticipants = isset($payload["currentParticipants"]) ? intval($payload["currentParticipants"]) : 0;
+    $eduUnitId = $payload["eduUnitId"] ?? null;
     $eduOtherUnitId = $payload["eduOtherUnitId"] ?? null;
     $campus = $payload["campus"] ?? ($payload["location"] ?? "Unknown");
     $startDate = $payload["startDate"] ?? null;
@@ -415,8 +416,25 @@ foreach ($unitList as $id => $payload) {
     $startYmd = paradigmTsToYmd($startDate);
     $endYmd = paradigmTsToYmd($endDate);
 
-    if (!$startYmd && $eduOtherUnitId && isset($reportMeta[$eduOtherUnitId])) {
-        $startYmd = $reportMeta[$eduOtherUnitId]['start_date'] ?? null;
+    // Try to match with Report Data
+    // The report is keyed by Unit Code (e.g., MBIS4001). 
+    // The API has 'eduUnitId' (MBIS5019) and 'eduOtherUnitId'. 
+    // We try both.
+    $breakdown = [];
+    $matchedKey = null;
+
+    if ($eduUnitId && isset($reportCounts[$eduUnitId])) {
+        $matchedKey = $eduUnitId;
+    } elseif ($eduOtherUnitId && isset($reportCounts[$eduOtherUnitId])) {
+        $matchedKey = $eduOtherUnitId;
+    }
+
+    if ($matchedKey) {
+        $breakdown = $reportCounts[$matchedKey];
+        // If we found a match in report, deeper logic might also fix start dates
+        if (!$startYmd && isset($reportMeta[$matchedKey])) {
+            $startYmd = $reportMeta[$matchedKey]['start_date'] ?? null;
+        }
     }
 
     $block = getBlockLabelFromStartEnd($startYmd, $endYmd);
@@ -424,12 +442,14 @@ foreach ($unitList as $id => $payload) {
     $groups[] = [
         "scheduled_unit_id" => intval($id),
         "enrolled_count_live" => $currentParticipants,
+        "eduUnitId" => $eduUnitId,
         "eduOtherUnitId" => $eduOtherUnitId,
         "campus" => $campus,
         "startDate" => $startDate,
         "block" => $block,
         "source" => "list_cache", // accurate enough
         "error" => null,
+        "campus_breakdown" => $breakdown
     ];
 }
 
