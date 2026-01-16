@@ -400,16 +400,17 @@ function fetchAndParseReport($baseUrl, $user, $pw)
         if (!$campus)
             $campus = "Unknown";
         $campusUpper = strtoupper(trim($campus));
-        if ($campusUpper === 'AIHE')
+
+        if ($campusUpper === 'AIHE') {
             $campus = 'SYD';
+        } elseif ($campusUpper === 'CAMPUS_MEL' || $campusUpper === 'MEL') {
+            $campus = 'MEL';
+        } elseif ($campusUpper === 'CAMPUS_COMB' || $campusUpper === 'COMB') {
+            $campus = 'COMB';
+        }
 
-        // ... existing risk logic ... 
-
-        // 3. Encumbrance (Financial/Library Fines etc)
-        // ... (risk population) ...
-
+        // Risk Analysis (Enrolled Only)
         if ($isEnrolled) {
-            // Check Risk logic specifically for this student
             $risk = [];
             // 1. Visa Risk
             if ($visaExpire && $courseEnd) {
@@ -437,9 +438,6 @@ function fetchAndParseReport($baseUrl, $user, $pw)
             }
 
             if (!empty($risk)) {
-                // DEDUPLICATION FIX:
-                // Use Key: StudentID + Risk Type
-                // We ignore Unit Code in the key so we don't show the student 4 times for the same Course Risk.
                 $riskString = implode(", ", $risk);
                 $riskKey = $studentId . '_' . md5($riskString);
 
@@ -448,21 +446,14 @@ function fetchAndParseReport($baseUrl, $user, $pw)
                     $studentRisks[] = [
                         'id' => $studentId,
                         'name' => trim($firstName . ' ' . $lastName),
-                        'unit' => 'Multiple/All', // Since we merge, we can't show just one unit. Or we could logic this.
-                        // Actually, user might want to know if it's specific. But SAR is course wide.
+                        'unit' => 'Multiple/All',
                         'course' => $courseName,
                         'campus' => $campus,
                         'risk' => $riskString
                     ];
                 }
             }
-
-            // Populate granularGroups
-            // ... existing granular logic ...
-        } elseif ($campusUpper === 'CAMPUS_MEL' || $campusUpper === 'MEL')
-            $campus = 'MEL';
-        elseif ($campusUpper === 'CAMPUS_COMB' || $campusUpper === 'COMB')
-            $campus = 'COMB';
+        }
 
         // Aggregations (Enrolled Only)
         if ($isEnrolled) {
@@ -489,19 +480,9 @@ function fetchAndParseReport($baseUrl, $user, $pw)
                     $retentionData[$block][] = $studentId; // Keep it simple array for JSON
                 }
             }
-        }
 
-        if ($isEnrolled && $unitCode) {
-            // Use Scheduled Unit ID as unique key for "Group"
-            // If not present, fallback to a synthetic key (Unit+Block+Campus)
-            $groupId = $v['scheduled_unit_id'] ?? $v['id'] ?? ($unitCode . $block . $campus); // Try to get ID from row if mapped
-
-            // We need to map 'id' in the loop first.
-        }
-
-            // So one ScheduledUnitID = One Group.
-            // Let's aggregate by ScheduledUnitID.
-            if ($scheduledUnitId && $isEnrolled) {
+            // Granular Groups Population
+            if ($scheduledUnitId) {
                 if (!isset($granularGroups[$scheduledUnitId])) {
                     $granularGroups[$scheduledUnitId] = [
                         'id' => $scheduledUnitId,
@@ -641,4 +622,5 @@ echo json_encode([
     "retention_data" => $reportResult['retention_data'] ?? [],
     "meta" => $reportResult['meta'] ?? [],
     "groups" => $groups,
+    "detailed_groups" => $reportResult['detailed_groups'] ?? [] // Add missing key
 ], JSON_UNESCAPED_SLASHES);
