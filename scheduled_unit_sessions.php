@@ -16,12 +16,11 @@ ini_set('error_log', __DIR__ . '/php-error.log');
 
 header("Content-Type: application/json; charset=utf-8");
 
-require_once __DIR__ . '/config.php';
-
 // ---- Config ----
-$paradigmHost = PARADIGM_BASE_URL;
-$apiUser = API_USER;
-$apiPw = API_PASSWORD;
+$config = require_once __DIR__ . '/config.php';
+$paradigmHost = $config['paradigm_host'];
+$apiUser = $config['api_user'];
+$apiPw = $config['api_pw'];
 
 $CONNECT_TIMEOUT = 6;
 $TIMEOUT = 18;
