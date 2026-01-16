@@ -486,10 +486,7 @@
             "Checking in with our SX First Responders...", 
             "Giving Rian's SAR a gentle, reassuring pat...", 
             "Translating Bryn's Vision into Metrics...", 
-            "Attempting to Locate Gordon's Retention KPI... Just hanging in there.",
-            "Chasing lecturers for grades...",
-            "Counting coffee cups...",
-            "Finding empty classrooms..."
+            "Attempting to Locate Gordon's Retention KPI... Just hanging in there."
         ];
 
         let msgIdx = 0;
