@@ -681,6 +681,49 @@
             });
         }
 
+
+        function renderAtRisk(data) {
+            const tableBody = document.querySelector("#atRiskTable tbody");
+            if (!tableBody || !data.risk_data) return;
+
+            // Filter checks
+            const sarItems = data.risk_data.filter(s => {
+                const r = (s.risk || "").toLowerCase();
+                return r.includes("academic") || r.includes("status") || r.includes("encumbered");
+            });
+
+            tableBody.innerHTML = "";
+            if (sarItems.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-success">No At-Risk or Encumbered students found.</td></tr>`;
+                return;
+            }
+
+            // Sort by risk type (Status first, then Academic)
+            sarItems.sort((a, b) => a.risk.localeCompare(b.risk));
+
+            sarItems.forEach(s => {
+                const tr = document.createElement("tr");
+                let badgeClass = "bg-warning text-dark";
+                let category = "Academic Risk";
+
+                if (s.risk.toLowerCase().includes("encumbered")) {
+                    badgeClass = "bg-danger text-white";
+                    category = "Encumbrance";
+                }
+
+                tr.innerHTML = `
+                    <td class="fw-bold">${s.name} <div class="small text-muted">${s.id}</div></td>
+                    <td>
+                        <div class="mb-1">${s.course || 'Unknown Course'}</div>
+                        <span class="badge ${s.campus === 'MEL' ? 'badge-mel' : 'badge-syd'}">${s.campus || 'UNK'}</span>
+                    </td>
+                    <td><span class="badge ${badgeClass}">${category}</span></td>
+                    <td class="text-danger small">${s.risk}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
         function renderRetention(data) {
             const container = document.getElementById("retentionFlow");
             if (!container || !data.retention_data) return;
