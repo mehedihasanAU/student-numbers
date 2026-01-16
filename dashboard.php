@@ -501,6 +501,11 @@
         async function loadData() {
             const loader = document.getElementById("loader");
             if (loader) loader.style.display = "flex";
+            
+            // Artificial delay start time
+            const startTime = Date.now();
+            const MIN_LOADING_TIME = 3000; // 3 seconds minimum to show funny messages
+
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 300000);
 
@@ -509,6 +514,16 @@
                 clearTimeout(timeoutId);
                 if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
                 const json = await res.json();
+                
+                // Calculate remaining time to wait
+                const elapsed = Date.now() - startTime;
+                const remaining = Math.max(0, MIN_LOADING_TIME - elapsed);
+                
+                // Wait the remaining time if needed
+                if (remaining > 0) {
+                    await new Promise(r => setTimeout(r, remaining));
+                }
+
                 globalData = json;
                 render(json);
                 renderSuggestions(json);
