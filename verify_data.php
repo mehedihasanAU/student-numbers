@@ -1,5 +1,5 @@
 <?php
-require 'config.php';
+$config = require 'config.php';
 
 // Enable errors
 error_reporting(E_ALL);
