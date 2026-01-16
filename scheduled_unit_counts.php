@@ -319,21 +319,28 @@ function fetchAndParseReport($baseUrl, $user, $pw)
             if ($kNorm === 'scheduledunitcode' || $kNorm === 'unitcode')
                 $unitCode = $v;
 
-            // CAMPUS: Try strict then loose
-            // Standard: Location, Campus Name, Campus
-            // Variations: Site, Venue, Delivery Location, Offering Location
-            if ($kNorm === 'location' || $kNorm === 'campusname' || $kNorm === 'campus' || $kNorm === 'site' || $kNorm === 'venue') {
+            // CAMPUS / HOME INSTITUTION
+            // User specifies 'Home Institution Code' is the source of truth
+            if ($kNorm === 'homeinstitutioncode' || $kNorm === 'homeinstitute') {
                 $campus = $v;
-            } elseif (
-                !$campus && (
-                    strpos($kNorm, 'campus') !== false ||
-                    strpos($kNorm, 'location') !== false ||
-                    strpos($kNorm, 'site') !== false ||
-                    strpos($kNorm, 'venue') !== false ||
-                    strpos($kNorm, 'delivery') !== false
-                )
-            ) {
-                $campus = $v;
+                $foundDefinitiveCampus = true;
+            }
+
+            // Other Campus Column Candidates (only if definitive one not found yet)
+            if (!isset($foundDefinitiveCampus)) {
+                if ($kNorm === 'location' || $kNorm === 'campusname' || $kNorm === 'campus' || $kNorm === 'site' || $kNorm === 'venue') {
+                    $campus = $v;
+                } elseif (
+                    !$campus && (
+                        strpos($kNorm, 'campus') !== false ||
+                        strpos($kNorm, 'location') !== false ||
+                        strpos($kNorm, 'site') !== false ||
+                        strpos($kNorm, 'venue') !== false ||
+                        strpos($kNorm, 'delivery') !== false
+                    )
+                ) {
+                    $campus = $v;
+                }
             }
 
             // ID: Try strict then loose variants
