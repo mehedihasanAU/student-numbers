@@ -25,7 +25,7 @@ jobs:
           # If it is at the server root, change to './httpdocs/student-numbers/test/' or similar.
           protocol: ftp
           port: 21
-          server-dir: ./
+          server-dir: ./httpdocs/student-numbers/test/
           exclude: |
             **/.git*
             **/.git*/**
