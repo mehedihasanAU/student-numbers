@@ -532,12 +532,17 @@ function fetchAndParseReport($baseUrl, $user, $pw)
 // This is a HUGE optimization.
 
 // Fetch Report
+// Fetch Report
 $reportCachePath = $CACHE_DIR . "/report_11472_v5.json";
 $reportCacheTtl = 300;
 $reportResult = null;
 
 if (!$force && file_exists($reportCachePath) && (time() - filemtime($reportCachePath) < $reportCacheTtl)) {
-    $reportResult = json_decode(file_get_contents($reportCachePath), true);
+    $decoded = json_decode(file_get_contents($reportCachePath), true);
+    // STALE CACHE CHECK: If detailed_groups is missing (new feature), force refresh
+    if (isset($decoded['detailed_groups'])) {
+        $reportResult = $decoded;
+    }
 }
 
 if ($reportResult === null) {
