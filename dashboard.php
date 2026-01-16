@@ -83,6 +83,12 @@
             color: #4b5563;
         }
 
+        .lecturer-name {
+            font-size: 0.8rem;
+            color: #6b7280;
+            font-style: italic;
+        }
+
         .campus-badge {
             font-size: 0.8rem;
             font-weight: 600;
@@ -96,19 +102,15 @@
             color: #0369a1;
         }
 
-        /* Sky Blue */
         .badge-syd {
             background: #fce7f3;
             color: #be185d;
         }
 
-        /* Pink/Rose */
         .badge-comb {
             background: #f3e8ff;
             color: #7e22ce;
         }
-
-        /* Purple */
 
         .search-input {
             border-radius: 8px;
@@ -134,11 +136,17 @@
             justify-content: center;
             flex-direction: column;
         }
+
+        .progress-thin {
+            height: 6px;
+            margin-top: 4px;
+            border-radius: 3px;
+            background-color: #e5e7eb;
+        }
     </style>
 </head>
 
 <body>
-
 
     <!-- Loader -->
     <div id="loader" class="loader-overlay">
@@ -168,10 +176,7 @@
 
         <!-- Header with Branding -->
         <div class="row mb-5 align-items-center">
-            <div class="col-8">
-                <!--<img src="https://as.aih.edu.au/logo-green.svg" alt="AIHE Logo" style="height: 50px;"> -->
-                <!-- <h4 class="mt-3 text-secondary fw-bold" style="color: #036A37 !important;">Enrolment Insights</h4> -->
-            </div>
+            <div class="col-8"></div>
         </div>
 
         <!-- Stats KPIs -->
@@ -183,15 +188,6 @@
                             title="Distinct students with Enrolled status">Total Students</div>
                         <div class="display-6 fw-bold text-primary mt-1" id="kpiUnique">—</div>
                     </div>
-                    <div class="bg-light rounded-circle p-3 text-primary">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
-                    </div>
                 </div>
             </div>
             <div class="col-md-3">
@@ -201,39 +197,14 @@
                             title="Units with at least one enrolment">Open Active Units</div>
                         <div class="display-6 fw-bold text-dark mt-1" id="kpiUnits">—</div>
                     </div>
-                    <div class="bg-light rounded-circle p-3 text-secondary">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-                        </svg>
-                    </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="p-3 bg-white rounded-3 border shadow-sm d-flex align-items-center justify-content-between">
                     <div>
                         <div class="text-secondary small fw-bold text-uppercase tracking-wide"
-                            title="Total number of active class blocks being taught">Total Groups (Open+Closed)</div>
+                            title="Total number of active class blocks being taught">Total Groups</div>
                         <div class="display-6 fw-bold text-dark mt-1" id="kpiGroups">—</div>
-                    </div>
-                    <div class="bg-light rounded-circle p-3 text-secondary">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="p-3 bg-white rounded-3 border shadow-sm d-flex align-items-center justify-content-between">
-                    <div>
-                        <div class="text-secondary small fw-bold text-uppercase tracking-wide">Data Source</div>
-                        <div class="h5 fw-bold text-dark mt-2 mb-0">Report 11472</div>
-                        <div class="small text-muted" id="metaSourceDate">Active</div>
                     </div>
                 </div>
             </div>
@@ -242,9 +213,77 @@
         <div class="row">
             <!-- Main Content (Left) -->
             <div class="col-lg-9">
-                <!-- Content Grid -->
-                <div id="cardsGrid" class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
-                    <!-- Cards injected via JS -->
+
+                <!-- Navigation Tabs -->
+                <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" id="pills-dash-tab" data-bs-toggle="pill"
+                            data-bs-target="#pills-dash" type="button">Dashboard</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="pills-sugg-tab" data-bs-toggle="pill" data-bs-target="#pills-sugg"
+                            type="button">⚡ Group Suggestions (Early Finishers)</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="pills-reten-tab" data-bs-toggle="pill"
+                            data-bs-target="#pills-reten" type="button">📊 Retention Analysis</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="pills-tabContent">
+
+                    <!-- Tab 1: Dashboard (Unit Cards) -->
+                    <div class="tab-pane fade show active" id="pills-dash">
+                        <div id="cardsGrid" class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+                            <!-- Cards injected via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Suggestions (Early Finishers) -->
+                    <div class="tab-pane fade" id="pills-sugg">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header bg-warning-subtle text-warning-emphasis fw-bold">
+                                ⚠ Students with Visa Expiry before Course End Date ("Rush Cohort")
+                            </div>
+                            <div class="card-body">
+                                <p class="small text-muted mb-4">
+                                    These students must complete their course early due to visa constraints.
+                                    The table below suggests potential <strong>Group Creations</strong> based on student
+                                    volume per Course and Campus.
+                                </p>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle" id="suggestionTable">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Course / Program</th>
+                                                <th>Campus</th>
+                                                <th>Affected Students</th>
+                                                <th>Suggested Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Injected via JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 3: Retention -->
+                    <div class="tab-pane fade" id="pills-reten">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body">
+                                <h5 class="card-title fw-bold text-secondary mb-4">Block-to-Block Retention Flow</h5>
+                                <div id="retentionFlow"
+                                    class="d-flex flex-wrap gap-4 align-items-center justify-content-center py-5">
+                                    <!-- Injected via JS -->
+                                    <div class="text-muted fst-italic">Loading retention data...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -252,11 +291,11 @@
             <div class="col-lg-3">
                 <div class="sticky-top" style="top: 90px; z-index: 100;">
 
-                    <!-- At Risk Table -->
+                    <!-- Risks / Low Enrolment Table -->
                     <div class="mb-4">
                         <div class="d-flex align-items-center justify-content-between mb-2">
-                            <h6 class="mb-0 text-secondary fw-bold">At Risk (<= 10)</h6>
-                                    <span class="badge bg-danger text-white" id="riskCount">0</span>
+                            <h6 class="mb-0 text-secondary fw-bold">Unit Risk / Low Enrolment</h6>
+                            <span class="badge bg-danger text-white" id="riskCount">0</span>
                         </div>
 
                         <div class="card shadow-sm border-0">
@@ -266,35 +305,9 @@
                                         style="font-size: 0.8rem;">
                                         <thead class="table-light sticky-top">
                                             <tr>
-                                                <!-- Column Filters -->
-                                                <th>
-                                                    Unit
-                                                    <input type="text"
-                                                        class="form-control form-control-sm border-0 bg-transparent p-0 fw-normal small-placeholder"
-                                                        placeholder="Filter..." id="filtRiskUnit"
-                                                        style="font-size:0.75rem; height:auto;">
-                                                </th>
-                                                <th>
-                                                    Block
-                                                    <input type="text"
-                                                        class="form-control form-control-sm border-0 bg-transparent p-0 fw-normal small-placeholder"
-                                                        placeholder="Filter..." id="filtRiskBlock"
-                                                        style="font-size:0.75rem; height:auto;">
-                                                </th>
-                                                <th>
-                                                    Prog
-                                                    <input type="text"
-                                                        class="form-control form-control-sm border-0 bg-transparent p-0 fw-normal small-placeholder"
-                                                        placeholder="Filter..." id="filtRiskProg"
-                                                        style="font-size:0.75rem; height:auto;">
-                                                </th>
-                                                <th class="text-end">
-                                                    #
-                                                    <input type="text"
-                                                        class="form-control form-control-sm border-0 bg-transparent p-0 fw-normal small-placeholder text-end"
-                                                        placeholder="#" id="filtRiskCount"
-                                                        style="font-size:0.75rem; height:auto;">
-                                                </th>
+                                                <th>Unit</th>
+                                                <th>Block</th>
+                                                <th>#</th>
                                             </tr>
                                         </thead>
                                         <tbody class="small"></tbody>
@@ -351,69 +364,34 @@
         async function loadData() {
             const loader = document.getElementById("loader");
             if (loader) loader.style.display = "flex";
-
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 300000); // 300s timeout
+            const timeoutId = setTimeout(() => controller.abort(), 300000);
 
             try {
                 const res = await fetch(`${API_URL}?t=${Date.now()}`, { signal: controller.signal });
                 clearTimeout(timeoutId);
-
                 if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-
                 const json = await res.json();
                 globalData = json;
                 render(json);
+                renderSuggestions(json);
+                renderRetention(json);
 
-                // Check if we have partial data (source='pending' or 'report_only')
-                // If so, trigger another fetch immediately
                 if (json.groups) {
-                    const pendingCount = json.groups.filter(g => g.source === 'pending' || g.source === 'report_only').length;
+                    const pendingCount = json.groups.filter(g => g.source === 'pending').length;
                     if (pendingCount > 0) {
-                        console.log(`Partial data loaded (${pendingCount} pending). Auto-refreshing...`);
-                        if (loader) {
-                            loader.style.display = "flex";
-                            // Update loader text to show progress
-                            const txt = loader.querySelector(".fw-semibold");
-                            if (txt) txt.innerText = `Loading... (${pendingCount} remaining)`;
-                        }
-                        setTimeout(loadData, 500); // 500ms delay then retry
-                        return; // Don't hide loader yet
+                        if (loader) loader.querySelector(".fw-semibold").innerText = `Loading... (${pendingCount} remaining)`;
+                        setTimeout(loadData, 1000);
+                        return;
                     }
                 }
-
             } catch (e) {
                 console.error(e);
-                if (e.name === 'AbortError') {
-                    alert("Timeout: Server took too long to respond. Try refreshing.");
-                } else {
-                    alert("Error loading data: " + e.message);
-                }
+                alert("Error: " + e.message);
             } finally {
-                // Only hide loader if we didn't trigger a recursive call
-                // We know we triggered recursion if loader.style.display is still 'flex' and we're inside the success block
-                // Simpler: check if we are *not* pending.
-                const stillLoading = (globalData && globalData.groups && globalData.groups.some(g => g.source === 'pending' || g.source === 'report_only'));
+                const stillLoading = (globalData && globalData.groups && globalData.groups.some(g => g.source === 'pending'));
                 if (!stillLoading && loader) loader.style.display = "none";
             }
-        }
-
-        function getProgram(courseName, unitCode) {
-            if (courseName) {
-                const c = courseName.toLowerCase();
-                if (c.includes("business information systems")) return "ISY";
-                if (c.includes("accounting")) return "ACC";
-            }
-
-            // Fallback: Check Unit Code Prefix
-            if (unitCode) {
-                const u = unitCode.toUpperCase();
-                if (u.startsWith("MBIS") || u.startsWith("BBIS") || u.includes("ISY")) return "ISY";
-                if (u.startsWith("ACC") || u.includes("ACC")) return "ACC";
-                if (u.startsWith("BUS")) return "BUS";
-            }
-
-            return "BUS"; // Default catch-all
         }
 
         function getGroupLabel(blockName) {
@@ -424,46 +402,26 @@
 
         function render(data) {
             if (!data) return;
-
             const detailed = data.campus_breakdown_detail || {};
             const unitMeta = data.meta || {};
+            const unitDetails = data.unit_details || {};
             const expectedGroups = data.groups || [];
 
-            // Calculate KPIs
-            let grandTotal = 0;
             let unitCount = 0;
             let totalScheduledGroups = expectedGroups.length || 0;
             const cards = [];
             const activeUnitCodes = new Set();
             const riskItems = [];
 
-            const searchInput = document.getElementById("searchInput");
-            const search = searchInput ? searchInput.value.trim().toLowerCase() : "";
+            const search = document.getElementById("searchInput") ? document.getElementById("searchInput").value.trim().toLowerCase() : "";
 
-            // Filters for Risk Table
-            const filtRiskUnit = document.getElementById("filtRiskUnit");
-            const fRUnit = filtRiskUnit ? filtRiskUnit.value.toLowerCase() : "";
+            // Identify High-Level Risks from risk_data for Sidebar
+            // Note: Currently sidebar only does Low Enrolment. We can add more later.
 
-            const filtRiskBlock = document.getElementById("filtRiskBlock");
-            const fRBlock = filtRiskBlock ? filtRiskBlock.value.toLowerCase() : "";
-
-            const filtRiskProg = document.getElementById("filtRiskProg");
-            const fRProg = filtRiskProg ? filtRiskProg.value.toLowerCase() : "";
-
-            const filtRiskCount = document.getElementById("filtRiskCount");
-            const fRCount = filtRiskCount ? filtRiskCount.value.toLowerCase() : "";
-
-            // Iterate over units
             for (const [unitCode, blocks] of Object.entries(detailed)) {
                 if (unitCode === "MATERIAL_FEE") continue;
-
-                // Initialize sums
                 let unitTotal = 0;
                 const blockList = [];
-
-                // Pre-calculate unit metadata
-                const uMeta = unitMeta[unitCode] || {};
-                const prog = getProgram(uMeta.course_name, unitCode);
 
                 let totalMel = 0;
                 let totalSyd = 0;
@@ -474,31 +432,32 @@
                     const syd = campuses["SYD"] || 0;
                     const comb = campuses["COMB"] || 0;
                     const subTotal = mel + syd + comb;
-
                     unitTotal += subTotal;
                     totalMel += mel;
                     totalSyd += syd;
                     totalComb += comb;
 
+                    // Fetch Details (Lecturer, Capacity)
+                    const details = (unitDetails[unitCode] && unitDetails[unitCode][blockName]) ? unitDetails[unitCode][blockName] : {};
+
                     blockList.push({
                         name: blockName,
-                        mel,
-                        syd,
-                        comb,
-                        total: subTotal
+                        mel, syd, comb,
+                        total: subTotal,
+                        lecturer: details.lecturer || null,
+                        capacity: details.capacity || 0
                     });
 
                     // Risk Logic (<= 10)
-                    if (mel > 0 && mel <= 10) riskItems.push({ unitCode, grpLabel: getGroupLabel(blockName), blockName, campus: "MEL", count: mel, prog });
-                    if (syd > 0 && syd <= 10) riskItems.push({ unitCode, grpLabel: getGroupLabel(blockName), blockName, campus: "SYD", count: syd, prog });
-                    if (comb > 0 && comb <= 10) riskItems.push({ unitCode, grpLabel: getGroupLabel(blockName), blockName, campus: "COMB", count: comb, prog });
+                    if (mel > 0 && mel <= 10) riskItems.push({ unitCode, grpLabel: getGroupLabel(blockName), blockName, campus: "MEL", count: mel });
+                    if (syd > 0 && syd <= 10) riskItems.push({ unitCode, grpLabel: getGroupLabel(blockName), blockName, campus: "SYD", count: syd });
+                    if (comb > 0 && comb <= 10) riskItems.push({ unitCode, grpLabel: getGroupLabel(blockName), blockName, campus: "COMB", count: comb });
                 }
 
-                grandTotal += unitTotal;
+                grandTotal = data.unique_students; // Use API provided total
                 unitCount++;
                 activeUnitCodes.add(unitCode);
 
-                // Main Search Filter (applies to Cards only)
                 const hay = (unitCode + " " + blockList.map(b => b.name).join(" ")).toLowerCase();
                 if (search && !hay.includes(search)) continue;
 
@@ -511,25 +470,17 @@
             // KPIs
             const totalUnique = (data.unique_students || 0);
             const sCounts = data.status_counts || { Enrolled: 0, Other: 0 };
-
-            // Total Students Card
-            // Display "Total (Enrolled: X, Validated: Y)"
             const kpiEl = document.getElementById("kpiUnique");
             if (kpiEl) {
-                const enr = sCounts.Enrolled || 0;
-                const oth = sCounts.Other || 0;
-
                 kpiEl.innerHTML = `
             <div class="d-flex align-items-baseline gap-2">
                 <span>${totalUnique.toLocaleString()}</span>
                 <span class="text-secondary fw-normal fs-6" style="font-size:0.8rem !important">
-                    (<span class="text-success fw-bold" title="Enrolled">${enr.toLocaleString()}</span> / 
-                     <span class="text-muted" title="Admitted/Confirmed">${oth.toLocaleString()}</span>)
+                    (<span class="text-success fw-bold" title="Enrolled">${sCounts.Enrolled.toLocaleString()}</span> / 
+                     <span class="text-muted" title="Admitted/Confirmed">${sCounts.Other.toLocaleString()}</span>)
                 </span>
-            </div>
-        `;
+            </div>`;
             }
-
             if (document.getElementById("kpiUnits")) document.getElementById("kpiUnits").innerText = unitCount.toLocaleString();
             if (document.getElementById("kpiGroups")) document.getElementById("kpiGroups").innerText = totalScheduledGroups.toLocaleString();
 
@@ -543,19 +494,47 @@
                     cards.forEach(card => {
                         const blockHtml = card.blockList.map(b => {
                             const warn = (n) => (n <= 10) ? ' <span class="text-danger fw-bold">!</span>' : '';
+
+                            // Lecturer & Capacity UI
+                            let metaHtml = "";
+                            if (b.lecturer) metaHtml += `<div class="lecturer-name mb-1">👨‍🏫 ${b.lecturer}</div>`;
+
+                            // Progress Bar
+                            let progHtml = "";
+                            if (b.capacity > 0) {
+                                const pct = Math.min(100, Math.round((b.total / b.capacity) * 100));
+                                let color = "bg-primary";
+                                if (pct > 90) color = "bg-danger";
+                                else if (pct > 75) color = "bg-warning";
+                                else if (pct < 30) color = "bg-info";
+
+                                progHtml = `
+                                <div class="d-flex align-items-center gap-2 mt-1 mb-2" style="font-size:0.7rem;">
+                                    <div class="progress flex-grow-1" style="height:6px;">
+                                        <div class="progress-bar ${color}" role="progressbar" style="width: ${pct}%"></div>
+                                    </div>
+                                    <span class="text-muted">${b.total}/${b.capacity}</span>
+                                </div>`;
+                            }
+
                             return `
-                    <div class="block-row">
-                        <span class="block-name">${b.name}</span>
-                        <div>
-                            ${b.mel > 0 ? `<span class="campus-badge badge-mel" title="Melbourne">MEL: ${b.mel}${warn(b.mel)}</span>` : ''}
-                            ${b.syd > 0 ? `<span class="campus-badge badge-syd" title="Sydney">SYD: ${b.syd}${warn(b.syd)}</span>` : ''}
-                            ${b.comb > 0 ? `<span class="campus-badge badge-comb" title="SYD/MEL Combined">COMB: ${b.comb}${warn(b.comb)}</span>` : ''}
-                        </div>
-                    </div>
-                `;
+                            <div class="block-row align-items-start">
+                                <div style="flex:1">
+                                    <div class="d-flex justify-content-between">
+                                         <span class="block-name">${b.name}</span>
+                                    </div>
+                                    ${metaHtml}
+                                    ${progHtml}
+                                </div>
+                                <div class="ms-2 text-end">
+                                    ${b.mel > 0 ? `<div class="mb-1"><span class="campus-badge badge-mel">MEL: ${b.mel}${warn(b.mel)}</span></div>` : ''}
+                                    ${b.syd > 0 ? `<div class="mb-1"><span class="campus-badge badge-syd">SYD: ${b.syd}${warn(b.syd)}</span></div>` : ''}
+                                    ${b.comb > 0 ? `<div class="mb-1"><span class="campus-badge badge-comb">COMB: ${b.comb}${warn(b.comb)}</span></div>` : ''}
+                                </div>
+                            </div>
+                        `;
                         }).join("");
 
-                        // Summary Badge Logic
                         let summaryHtml = '';
                         if (card.breakdown) {
                             summaryHtml += '<div class="mb-3 d-flex justify-content-center gap-2">';
@@ -574,36 +553,25 @@
                                 <span class="unit-code">${card.unitCode}</span>
                                 <span class="unit-total">${card.unitTotal} Students</span>
                             </div>
-                            <!-- Summary Badges -->
                             ${summaryHtml}
-                            
-                            <div class="mt-2 text-start">
+                            <div class="mt-2 text-start small">
                                 ${blockHtml}
                             </div>
                         </div>
-                    </div>
-                `;
+                    </div>`;
                         grid.appendChild(div);
                     });
                 }
             }
 
-            // 4. Inactive Units/Groups Logic
+            // Inactive Units
             const closedTbody = document.querySelector("#closedTable tbody");
             if (closedTbody) {
                 closedTbody.innerHTML = "";
-
-                // Filter groups where the Unit Code has ZERO active enrolments
-                const closedGroups = expectedGroups.filter(g => {
-                    const code = g.eduOtherUnitId || "";
-                    return !activeUnitCodes.has(code);
-                });
-
-                // Sort by Unit Code
+                const closedGroups = expectedGroups.filter(g => !activeUnitCodes.has(g.eduOtherUnitId || ""));
                 closedGroups.sort((a, b) => (a.eduOtherUnitId || "").localeCompare(b.eduOtherUnitId || ""));
 
-                const countEl = document.getElementById("closedCount");
-                if (countEl) countEl.innerText = closedGroups.length;
+                document.getElementById("closedCount").innerText = closedGroups.length;
 
                 if (closedGroups.length === 0) {
                     closedTbody.innerHTML = `<tr><td colspan="2" class="text-center py-3">None found.</td></tr>`;
@@ -611,96 +579,133 @@
                     for (const g of closedGroups) {
                         const code = g.eduOtherUnitId || "Unknown";
                         if (search && !code.toLowerCase().includes(search)) continue;
-
-                        let blockLabel = g.block || "";
-                        let campus = g.campus || "";
-
-                        // Clean up "Unknown Block" display
-                        if (!blockLabel || blockLabel === "Unknown Block") {
-                            blockLabel = "Inactive";
-                        }
-
-                        // If campus is unknown/missing, don't show ()
-                        if (!campus || campus === "Unknown") campus = "";
-
-                        const grpLabel = getGroupLabel(blockLabel);
-
+                        const blockLabel = (g.block && g.block !== "Unknown Block") ? g.block : "Inactive";
                         const tr = document.createElement("tr");
-                        tr.innerHTML = `
-                    <td class="fw-bold"><span class="text-dark">${code}</span> <small class="text-muted ms-1">${grpLabel}</small></td>
-                    <td><small>${blockLabel} ${campus ? `(${campus})` : ''}</small></td>
-                 `;
+                        tr.innerHTML = `<td><span class="fw-bold text-dark">${code}</span></td><td>${blockLabel}</td>`;
                         closedTbody.appendChild(tr);
                     }
                 }
             }
 
-            // Render Risk Table
+            // Risk Table (Sidebar)
             const riskTbody = document.querySelector("#riskTable tbody");
             if (riskTbody) {
                 riskTbody.innerHTML = "";
+                riskItems.sort((a, b) => a.count - b.count);
+                document.getElementById("riskCount").innerText = riskItems.length;
 
-                const visibleRisk = riskItems.filter(item => {
-                    if (fRUnit && !item.unitCode.toLowerCase().includes(fRUnit)) return false;
-                    if (fRBlock && !item.blockName.toLowerCase().includes(fRBlock)) return false;
-                    if (fRProg && !item.prog.toLowerCase().includes(fRProg)) return false;
-                    if (fRCount && String(item.count) !== fRCount) return false;
-                    return true;
-                });
-
-                const riskCountEl = document.getElementById("riskCount");
-                if (riskCountEl) riskCountEl.innerText = visibleRisk.length;
-
-                // Sort by count asc by default
-                visibleRisk.sort((a, b) => a.count - b.count);
-
-                if (visibleRisk.length === 0) {
-                    riskTbody.innerHTML = `<tr><td colspan="4" class="text-center py-3">None.</td></tr>`;
+                if (riskItems.length === 0) {
+                    riskTbody.innerHTML = `<tr><td colspan="3" class="text-center py-3">None.</td></tr>`;
                 } else {
-                    for (const item of visibleRisk) {
-                        let progBadge = `<span class="badge bg-primary" style="font-size:0.65rem">BUS</span>`; // Default Blue for BUS
-
-                        if (item.prog === 'ISY') {
-                            progBadge = `<span class="badge bg-success" style="font-size:0.65rem">ISY</span>`; // Green
-                        } else if (item.prog === 'ACC') {
-                            progBadge = `<span class="badge text-white" style="font-size:0.65rem; background-color:#BD2200;">ACC</span>`; // Red
-                        } else {
-                            // BUS or UNK (Default Blue)
-                            progBadge = `<span class="badge bg-primary" style="font-size:0.65rem">${item.prog}</span>`;
-                        }
-
+                    riskItems.forEach(item => {
                         const tr = document.createElement("tr");
-                        tr.innerHTML = `
-                    <td class="fw-bold" style="white-space:nowrap;">
-                        ${item.unitCode} <span class="text-muted small">${item.grpLabel}</span>
-                    </td>
-                    <td><small style="font-size:0.75rem">${item.blockName} (${item.campus})</small></td>
-                    <td>${progBadge}</td>
-                    <td class="text-end fw-bold text-danger">${item.count}</td>
-                 `;
+                        tr.innerHTML = `<td><b>${item.unitCode}</b></td><td>${item.blockName} (${item.campus})</td><td class="text-danger fw-bold">${item.count}</td>`;
                         riskTbody.appendChild(tr);
-                    }
+                    });
                 }
             }
         }
 
-        // Events
+        function renderSuggestions(data) {
+            const tableBody = document.querySelector("#suggestionTable tbody");
+            if (!tableBody || !data.risk_data) return;
+
+            // grouping: Key = Course + Campus
+            const groups = {};
+
+            data.risk_data.forEach(s => {
+                // Check if risk contains "Visa"
+                if (s.risk && s.risk.includes("Visa")) {
+                    const course = s.course || "Unknown Course";
+                    const campus = s.campus || "Unknown";
+
+                    const key = `${course}|${campus}`;
+                    if (!groups[key]) {
+                        groups[key] = { course, campus, count: 0, studentNames: [] };
+                    }
+                    groups[key].count++;
+                }
+            });
+
+            // Convert to array and sort
+            const sorted = Object.values(groups).sort((a, b) => b.count - a.count);
+
+            tableBody.innerHTML = "";
+            if (sorted.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4">No early-completion risks detected.</td></tr>`;
+                return;
+            }
+
+            sorted.forEach(g => {
+                const tr = document.createElement("tr");
+                const suggestion = `Consider creating a <strong>fast-track group</strong> for ${g.course} in ${g.campus}.`;
+
+                tr.innerHTML = `
+                    <td class="fw-bold text-primary">${g.course}</td>
+                    <td><span class="badge ${g.campus === 'MEL' ? 'badge-mel' : 'badge-syd'}">${g.campus}</span></td>
+                    <td class="fw-bold fs-5">${g.count}</td>
+                    <td class="text-success">${suggestion}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function renderRetention(data) {
+            const container = document.getElementById("retentionFlow");
+            if (!container || !data.retention_data) return;
+
+            // Sort blocks chronologically (simplistic mapping)
+            const map = { "Summer School": 1, "Block 1": 2, "Block 2": 3, "Block 3": 4, "Block 4": 5, "Winter School": 6 };
+            const blocks = Object.keys(data.retention_data).sort((a, b) => (map[a] || 99) - (map[b] || 99));
+
+            if (blocks.length < 2) {
+                container.innerHTML = "<div>Not enough distinct blocks to calculate flow yet.</div>";
+                return;
+            }
+
+            let html = "";
+
+            for (let i = 0; i < blocks.length; i++) {
+                const currName = blocks[i];
+                const currIds = data.retention_data[currName] || [];
+                const count = currIds.length;
+
+                // Block Node
+                html += `
+                <div class="text-center">
+                    <div class="fw-bold text-secondary mb-1">${currName}</div>
+                    <div class="bg-white border rounded-3 py-3 px-4 shadow-sm" style="min-width:120px;">
+                        <div class="h3 fw-bold text-dark mb-0">${count}</div>
+                        <div class="small text-muted">Students</div>
+                    </div>
+                </div>`;
+
+                // Connector Arrow (Retention to Next Block)
+                if (i < blocks.length - 1) {
+                    const nextName = blocks[i + 1];
+                    const nextIds = data.retention_data[nextName] || [];
+
+                    // Intersection
+                    const retentionCount = currIds.filter(id => nextIds.includes(id)).length;
+                    const pct = count > 0 ? Math.round((retentionCount / count) * 100) : 0;
+
+                    html += `
+                    <div class="text-center px-2">
+                        <div class="text-success fw-bold small mb-1">${pct}% Retained</div>
+                        <div style="height:2px; width:60px; background:#198754; position:relative; top:5px;"></div>
+                        <div class="text-muted small mt-2">(${retentionCount})</div>
+                    </div>`;
+                }
+            }
+
+            container.innerHTML = html;
+        }
+
         const btnRefresh = document.getElementById("btnRefresh");
         if (btnRefresh) btnRefresh.addEventListener("click", () => loadData());
-
         const searchInput = document.getElementById("searchInput");
         if (searchInput) searchInput.addEventListener("input", () => render(globalData));
-
-        // Table Filters
-        ['filtRiskUnit', 'filtRiskBlock', 'filtRiskProg', 'filtRiskCount'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener("input", () => render(globalData));
-        });
-
-        // Init
-        window.addEventListener('DOMContentLoaded', () => {
-            loadData();
-        });
+        window.addEventListener('DOMContentLoaded', () => { loadData(); });
     </script>
 </body>
 
