@@ -371,8 +371,15 @@ function fetchAndParseReport($baseUrl, $user, $pw)
                 $lecturerFirst = $v;
             if ($kNorm === 'scheduledunitteacherlastname')
                 $lecturerLast = $v;
-            if ($kNorm === 'teachernamefreetext' && !$lecturerFirst)
-                $lecturerFirst = $v; // Fallback
+
+            // New User Columns for Lecturer
+            if ($kNorm === 'teachernamefreetext')
+                $teacherFree = $v;
+            if ($kNorm === 'supervisorfirstname')
+                $supFirst = $v;
+            if ($kNorm === 'supervisorlastname')
+                $supLast = $v;
+
             if ($kNorm === 'maximumparticipants')
                 $maxParticipants = intval($v);
             if ($kNorm === 'visaexpiredate')
@@ -510,21 +517,31 @@ function fetchAndParseReport($baseUrl, $user, $pw)
             }
 
             // Granular Groups Population
-            // Fallback: If no ScheduledUnitID, create a synthetic one so we still display the card
             $gid = $scheduledUnitId;
             if (!$gid) {
                 // Synthetic ID: UnitCode + Block + Campus
+                // Note: This merges groups if multiple groups exist for same Unit/Block/Campus!
+                // We really need ScheduledUnitID for distinct groups.
                 $gid = "SYN-" . md5($unitCode . $block . $campus);
+            }
+
+            // Lecturer Resolution
+            // Priority: FreeText > Supervisor > ScheduledTeacher
+            $lecturerName = trim($lecturerFirst . ' ' . $lecturerLast);
+            if ($teacherFree) {
+                $lecturerName = $teacherFree;
+            } elseif ($supFirst || $supLast) {
+                $lecturerName = trim($supFirst . ' ' . $supLast);
             }
 
             if ($gid) {
                 if (!isset($granularGroups[$gid])) {
                     $granularGroups[$gid] = [
-                        'id' => $scheduledUnitId ? $scheduledUnitId : $gid, // Keep original if exists
+                        'id' => $scheduledUnitId ? $scheduledUnitId : $gid,
                         'unit_code' => $unitCode,
                         'block' => $block,
                         'campus' => $campus,
-                        'lecturer' => trim($lecturerFirst . ' ' . $lecturerLast),
+                        'lecturer' => $lecturerName,
                         'capacity' => $maxParticipants,
                         'enrolled_count' => 0,
                         'is_synthetic' => !$scheduledUnitId
