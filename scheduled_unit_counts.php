@@ -284,6 +284,11 @@ function fetchAndParseReport($baseUrl, $user, $pw)
     $uniqueStudents = [];
     $statusCounts = ['Enrolled' => 0, 'Other' => 0];
 
+    // New Data Structures
+    $unitDetails = []; // [UnitCode][Block] => {lecturer, capacity}
+    $studentRisks = [];
+    $retentionData = []; // [Block] => [StudentIDs]
+
     foreach ($rows as $row) {
         $unitCode = null;
         $campus = null;
@@ -293,8 +298,20 @@ function fetchAndParseReport($baseUrl, $user, $pw)
         $studentId = null;
         $courseName = null;
 
+        // New Fields
+        $lecturerFirst = null;
+        $lecturerLast = null;
+        $maxParticipants = 0;
+        $visaExpire = null;
+        $progression = null;
+        $courseEnd = null;
+        $firstName = null;
+        $lastName = null;
+
         foreach ($row as $k => $v) {
             $kNorm = strtolower(str_replace(['_', ' '], '', $k));
+
+            // Existing Mappings
             if ($kNorm === 'scheduledunitcode' || $kNorm === 'unitcode')
                 $unitCode = $v;
             if (strpos($kNorm, 'campus') !== false || strpos($kNorm, 'institution') !== false)
@@ -309,16 +326,42 @@ function fetchAndParseReport($baseUrl, $user, $pw)
                 $studentId = $v;
             if (strpos($kNorm, 'coursename') !== false || $kNorm === 'course')
                 $courseName = $v;
+
+            // New Mappings
+            if ($kNorm === 'scheduledunitteacherfirstname')
+                $lecturerFirst = $v;
+            if ($kNorm === 'scheduledunitteacherlastname')
+                $lecturerLast = $v;
+            if ($kNorm === 'teachernamefreetext' && !$lecturerFirst)
+                $lecturerFirst = $v; // Fallback
+            if ($kNorm === 'maximumparticipants')
+                $maxParticipants = intval($v);
+            if ($kNorm === 'visaexpiredate')
+                $visaExpire = $v;
+            if ($kNorm === 'progressionstatusdescription')
+                $progression = $v;
+            if ($kNorm === 'courseexpectedenddate')
+                $courseEnd = $v;
+            if ($kNorm === 'firstname')
+                $firstName = $v;
+            if ($kNorm === 'lastname')
+                $lastName = $v;
         }
 
         if (!$unitCode)
             continue;
         $unitCode = trim($unitCode);
 
-        if ($status && stripos($status, 'Enrolled') !== false)
+        // Filter for "Enrolled" only
+        $isEnrolled = ($status && stripos($status, 'Enrolled') !== false);
+
+        if ($isEnrolled) {
             $statusCounts['Enrolled']++;
-        else
+        } else {
             $statusCounts['Other']++;
+            // We usually only count enrolled students for numbers, but maybe we want risks for all?
+            // stick to enrolled for consistency
+        }
 
         if ($studentId)
             $uniqueStudents[$studentId] = true;
@@ -328,18 +371,21 @@ function fetchAndParseReport($baseUrl, $user, $pw)
         if ($courseName && empty($unitMeta[$unitCode]['course_name']))
             $unitMeta[$unitCode]['course_name'] = $courseName;
 
+        // Start Date Logic
         if ($startDateRaw && empty($unitMeta[$unitCode]['start_date'])) {
             if (preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $startDateRaw, $m)) {
                 $unitMeta[$unitCode]['start_date'] = $m[0] ? str_replace('-', '', $m[0]) : "";
             }
         }
 
+        // Block Logic
         $block = "Unknown Block";
         if ($blockRaw) {
             $block = preg_replace('/^\d{4}\s*-\s*/', '', trim($blockRaw));
             $block = trim($block, " -");
         }
 
+        // Campus Logic
         if (!$campus)
             $campus = "Unknown";
         $campusUpper = strtoupper(trim($campus));
@@ -350,21 +396,83 @@ function fetchAndParseReport($baseUrl, $user, $pw)
         elseif ($campusUpper === 'CAMPUS_COMB' || $campusUpper === 'COMB')
             $campus = 'COMB';
 
-        if (!isset($counts[$unitCode]))
-            $counts[$unitCode] = [];
-        if (!isset($counts[$unitCode][$campus]))
-            $counts[$unitCode][$campus] = 0;
-        $counts[$unitCode][$campus]++;
+        // Aggregations (Enrolled Only)
+        if ($isEnrolled) {
+            if (!isset($counts[$unitCode]))
+                $counts[$unitCode] = [];
+            if (!isset($counts[$unitCode][$campus]))
+                $counts[$unitCode][$campus] = 0;
+            $counts[$unitCode][$campus]++;
 
-        if (!isset($detailedCounts[$unitCode]))
-            $detailedCounts[$unitCode] = [];
-        if (!isset($detailedCounts[$unitCode][$block]))
-            $detailedCounts[$unitCode][$block] = [];
-        if (!isset($detailedCounts[$unitCode][$block][$campus]))
-            $detailedCounts[$unitCode][$block][$campus] = 0;
-        $detailedCounts[$unitCode][$block][$campus]++;
+            if (!isset($detailedCounts[$unitCode]))
+                $detailedCounts[$unitCode] = [];
+            if (!isset($detailedCounts[$unitCode][$block]))
+                $detailedCounts[$unitCode][$block] = [];
+            if (!isset($detailedCounts[$unitCode][$block][$campus]))
+                $detailedCounts[$unitCode][$block][$campus] = 0;
+            $detailedCounts[$unitCode][$block][$campus]++;
+
+            // Retention Data
+            if ($studentId && $block) {
+                if (!isset($retentionData[$block]))
+                    $retentionData[$block] = [];
+                // Use array key for simpler uniqueness, though input should be unique tuple
+                if (!in_array($studentId, $retentionData[$block])) {
+                    $retentionData[$block][] = $studentId; // Keep it simple array for JSON
+                }
+            }
+        }
+
+        // Unit Details (Capture first occurrence per Block)
+        if (!isset($unitDetails[$unitCode]))
+            $unitDetails[$unitCode] = [];
+        if (!isset($unitDetails[$unitCode][$block])) {
+            $lecturerName = trim($lecturerFirst . ' ' . $lecturerLast);
+            $unitDetails[$unitCode][$block] = [
+                'lecturer' => $lecturerName,
+                'capacity' => $maxParticipants
+            ];
+        }
+
+        // Risk Analysis (Visa & Academic) - Check ALL students or just Enrolled? 
+        // Let's check Enrolled for now to be actionable.
+        if ($isEnrolled && $studentId) {
+            $risk = [];
+
+            // 1. Visa Risk
+            if ($visaExpire && $courseEnd) {
+                if ($visaExpire < $courseEnd) {
+                    $risk[] = "Visa expires ($visaExpire) before course end ($courseEnd)";
+                }
+            }
+
+            // 2. Academic Risk
+            if ($progression && stripos($progression, 'Good') === false && stripos($progression, 'Satisfactory') === false) {
+                // "Show Cause", "At Risk", "Probation"
+                $risk[] = "Academic: $progression";
+            }
+
+            if (!empty($risk)) {
+                $studentRisks[] = [
+                    'id' => $studentId,
+                    'name' => trim($firstName . ' ' . $lastName),
+                    'unit' => $unitCode,
+                    'risk' => implode(", ", $risk)
+                ];
+            }
+        }
     }
-    return ['counts' => $counts, 'detailed' => $detailedCounts, 'meta' => $unitMeta, 'unique_student_count' => count($uniqueStudents), 'status_counts' => $statusCounts];
+
+    return [
+        'counts' => $counts,
+        'detailed' => $detailedCounts,
+        'meta' => $unitMeta,
+        'unique_student_count' => count($uniqueStudents),
+        'status_counts' => $statusCounts,
+        'unit_details' => $unitDetails,
+        'student_risks' => $studentRisks,
+        'retention_data' => $retentionData
+    ];
 }
 
 // -------------------- 3. INDIVIDUAL FETCH LOOP --------------------
