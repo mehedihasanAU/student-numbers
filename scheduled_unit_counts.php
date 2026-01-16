@@ -289,6 +289,7 @@ function fetchAndParseReport($baseUrl, $user, $pw)
     $studentRisks = [];
     $retentionData = []; // [Block] => [StudentIDs]
     $granularGroups = [];
+    $uniqueRisks = [];
 
     foreach ($rows as $row) {
         $unitCode = null;
@@ -472,14 +473,20 @@ function fetchAndParseReport($baseUrl, $user, $pw)
             }
 
             if (!empty($risk)) {
-                $studentRisks[] = [
-                    'id' => $studentId,
-                    'name' => trim($firstName . ' ' . $lastName),
-                    'unit' => $unitCode,
-                    'course' => $courseName,
-                    'campus' => $campus,
-                    'risk' => implode(", ", $risk)
-                ];
+                // Deduplicate Risks (User reported same name appearing multiple times)
+                // Use a unique key: ID + UnitCode + RiskString
+                $riskKey = $studentId . '_' . $unitCode . '_' . md5(implode($risk));
+                if (!isset($uniqueRisks[$riskKey])) {
+                    $uniqueRisks[$riskKey] = true;
+                    $studentRisks[] = [
+                        'id' => $studentId,
+                        'name' => trim($firstName . ' ' . $lastName),
+                        'unit' => $unitCode,
+                        'course' => $courseName,
+                        'campus' => $campus,
+                        'risk' => implode(", ", $risk)
+                    ];
+                }
             }
 
             // Populate granularGroups
