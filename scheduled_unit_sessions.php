@@ -16,23 +16,26 @@ ini_set('error_log', __DIR__ . '/php-error.log');
 
 header("Content-Type: application/json; charset=utf-8");
 
+require_once __DIR__ . '/config.php';
+
 // ---- Config ----
-$paradigmHost = "https://aihe.edu.net.au";
-$apiUser      = "A.Hasan";
-$apiPw        = "AlphaUniform9";
+$paradigmHost = PARADIGM_BASE_URL;
+$apiUser = API_USER;
+$apiPw = API_PASSWORD;
 
 $CONNECT_TIMEOUT = 6;
-$TIMEOUT         = 18;
+$TIMEOUT = 18;
 
 // -------------------- INPUT --------------------
 $id = isset($_GET["id"]) ? intval($_GET["id"]) : 0;
 if ($id <= 0) {
     http_response_code(400);
-    echo json_encode(["ok"=>false, "error"=>"Missing/invalid id"], JSON_UNESCAPED_SLASHES);
+    echo json_encode(["ok" => false, "error" => "Missing/invalid id"], JSON_UNESCAPED_SLASHES);
     exit;
 }
 
-function curlGet($url, $apiUser, $apiPw, $connectTimeout, $timeout) {
+function curlGet($url, $apiUser, $apiPw, $connectTimeout, $timeout)
+{
     $ch = curl_init();
     curl_setopt_array($ch, [
         CURLOPT_URL => $url,
@@ -51,15 +54,16 @@ function curlGet($url, $apiUser, $apiPw, $connectTimeout, $timeout) {
     ]);
 
     $body = curl_exec($ch);
-    $err  = curl_error($ch);
+    $err = curl_error($ch);
     $http = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $ct   = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+    $ct = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
     curl_close($ch);
 
     return [$http, $ct, $err ?: null, $body ?: ""];
 }
 
-function isJsonCt($ct) {
+function isJsonCt($ct)
+{
     return is_string($ct) && stripos($ct, "application/json") !== false;
 }
 
@@ -67,7 +71,8 @@ function isJsonCt($ct) {
  * Attempt to parse sessions from HTML table.
  * We’ll map columns by header names (loose matching).
  */
-function parseSessionsFromHtml($html) {
+function parseSessionsFromHtml($html)
+{
     $out = [];
 
     libxml_use_internal_errors(true);
@@ -75,20 +80,26 @@ function parseSessionsFromHtml($html) {
 
     // Many pages aren't UTF-8 clean; this wrapper helps
     $wrapped = '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">' . $html;
-    if (!$dom->loadHTML($wrapped)) return $out;
+    if (!$dom->loadHTML($wrapped))
+        return $out;
 
     $xp = new DOMXPath($dom);
 
     // Find the first table that has at least one row
     $tables = $xp->query("//table");
-    if (!$tables || $tables->length === 0) return $out;
+    if (!$tables || $tables->length === 0)
+        return $out;
 
     $bestTable = null;
     foreach ($tables as $t) {
         $rows = $xp->query(".//tr", $t);
-        if ($rows && $rows->length >= 2) { $bestTable = $t; break; }
+        if ($rows && $rows->length >= 2) {
+            $bestTable = $t;
+            break;
+        }
     }
-    if (!$bestTable) $bestTable = $tables->item(0);
+    if (!$bestTable)
+        $bestTable = $tables->item(0);
 
     // Headers
     $headers = [];
@@ -106,38 +117,42 @@ function parseSessionsFromHtml($html) {
     }
 
     // Helper to find header index by keywords
-    $findIdx = function($keywords) use ($headers) {
+    $findIdx = function ($keywords) use ($headers) {
         foreach ($headers as $i => $h) {
             foreach ($keywords as $k) {
-                if (strpos($h, $k) !== false) return $i;
+                if (strpos($h, $k) !== false)
+                    return $i;
             }
         }
         return -1;
     };
 
-    $idxSubject = $findIdx(["session subject","subject"]);
-    $idxRoom    = $findIdx(["room"]);
-    $idxGroup   = $findIdx(["group number","group"]);
-    $idxCurr    = $findIdx(["current participants","current"]);
+    $idxSubject = $findIdx(["session subject", "subject"]);
+    $idxRoom = $findIdx(["room"]);
+    $idxGroup = $findIdx(["group number", "group"]);
+    $idxCurr = $findIdx(["current participants", "current"]);
 
     // Data rows start from 2nd tr
     $rows = $xp->query(".//tr[position()>1]", $bestTable);
     foreach ($rows as $r) {
         $cells = $xp->query(".//td", $r);
-        if (!$cells || $cells->length === 0) continue;
+        if (!$cells || $cells->length === 0)
+            continue;
 
-        $get = function($idx) use ($cells) {
-            if ($idx < 0 || $idx >= $cells->length) return "";
+        $get = function ($idx) use ($cells) {
+            if ($idx < 0 || $idx >= $cells->length)
+                return "";
             return trim(preg_replace('/\s+/', ' ', $cells->item($idx)->textContent));
         };
 
         $subject = $get($idxSubject);
-        $room    = $get($idxRoom);
+        $room = $get($idxRoom);
         $groupNo = $get($idxGroup);
-        $curr    = $get($idxCurr);
+        $curr = $get($idxCurr);
 
         // If the row is totally empty, skip
-        if ($subject === "" && $room === "" && $groupNo === "" && $curr === "") continue;
+        if ($subject === "" && $room === "" && $groupNo === "" && $curr === "")
+            continue;
 
         $out[] = [
             "session_subject" => $subject,
@@ -153,9 +168,9 @@ function parseSessionsFromHtml($html) {
 // -------------------- TRY LEGACY AJAX ENDPOINT --------------------
 $tested = [];
 $urlsToTry = [
-    rtrim($paradigmHost,"/") . "/php/scheduled_unit_session_edit.php?ajax=1&scheduled_unit_id=" . $id,
-    rtrim($paradigmHost,"/") . "/php/scheduled_unit_session_edit.php?ajax=1&id=" . $id,
-    rtrim($paradigmHost,"/") . "/php/scheduled_unit_session_edit.php?ajax=1&eduScheduledUnitId=" . $id,
+    rtrim($paradigmHost, "/") . "/php/scheduled_unit_session_edit.php?ajax=1&scheduled_unit_id=" . $id,
+    rtrim($paradigmHost, "/") . "/php/scheduled_unit_session_edit.php?ajax=1&id=" . $id,
+    rtrim($paradigmHost, "/") . "/php/scheduled_unit_session_edit.php?ajax=1&eduScheduledUnitId=" . $id,
 ];
 
 $sessions = null;
@@ -196,7 +211,7 @@ foreach ($urlsToTry as $u) {
                 break;
             }
             // If it's an array itself
-            if (array_keys($j) === range(0, count($j)-1)) {
+            if (array_keys($j) === range(0, count($j) - 1)) {
                 $sessions = $j;
                 break;
             }
@@ -228,7 +243,8 @@ if ($sessions === null) {
 // Normalize sessions rows for your dashboard filters
 $norm = [];
 foreach ($sessions as $s) {
-    if (!is_array($s)) continue;
+    if (!is_array($s))
+        continue;
     $norm[] = [
         "session_subject" => $s["session_subject"] ?? $s["Session Subject"] ?? $s["subject"] ?? ($s["name"] ?? ""),
         "room" => $s["room"] ?? $s["Room"] ?? ($s["location"] ?? ""),
