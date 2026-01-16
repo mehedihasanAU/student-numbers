@@ -450,6 +450,8 @@
             let totalScheduledGroups = expectedGroups.length || 0;
             const cards = [];
 
+            const activeUnitCodes = new Set(); // Re-added to fix ReferenceError
+
             const search = document.getElementById("searchInput") ? document.getElementById("searchInput").value.trim().toLowerCase() : "";
 
             // Iterate Units
@@ -501,6 +503,7 @@
                 if (search && !hay.includes(search)) continue;
 
                 unitCount++;
+                activeUnitCodes.add(unitCode);
 
                 // Sort blocks chronologically
                 blockList.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
