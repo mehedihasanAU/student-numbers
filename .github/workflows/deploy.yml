@@ -1,0 +1,35 @@
+name: Deploy to Plesk Hosting
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Sync files
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # The remote directory to deploy to.
+          # IMPORTANT: Verify this path matches your FTP user's root.
+          # If your FTP user is locked to the /student-numbers/test folder, keep './'.
+          # If it is at the server root, change to './httpdocs/student-numbers/test/' or similar.
+          server-dir: ./
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            probe_*.php
+            analyze_*.php
+            *.log
+            *.json
+            README.md
