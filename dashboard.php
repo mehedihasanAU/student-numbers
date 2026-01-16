@@ -168,24 +168,48 @@
         .loader-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(2px);
-            z-index: 1000;
+            background: rgba(255, 255, 255, 0.98);
+            z-index: 2000;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-direction: column;
+            transition: opacity 0.3s ease;
         }
 
-        .progress-thin {
-            height: 6px;
-            margin-top: 4px;
-            border-radius: 3px;
-            background-color: #f3f4f6;
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--aih-green-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
         }
 
-        .progress-bar {
-            border-radius: 3px;
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--aih-green-primary);
+            margin-bottom: 5px;
+        }
+
+        .loading-subtext {
+            font-size: 0.95rem;
+            color: #666;
+            font-style: italic;
+            min-height: 1.5em;
+            /* Prevent layout shift */
         }
 
         /* Bootstrap Overrides for Theme */
@@ -203,8 +227,10 @@
 
     <!-- Loader -->
     <div id="loader" class="loader-overlay">
-        <div class="spinner-border text-success mb-3" role="status"></div>
-        <div class="fw-semibold text-secondary">Please wait. Loading live data...</div>
+        <div class="spinner"></div>
+        <div class="loading-text">Loading Data...</div>
+        <div class="loading-subtext" id="loadingMsg">Waking up the server...</div>
+        <div class="fw-semibold text-success mt-2 small" id="pendingCount"></div>
     </div>
 
     <nav class="navbar navbar-expand-lg sticky-top py-3">
@@ -453,6 +479,27 @@
         const API_URL = "scheduled_unit_counts.php";
         let globalData = null;
 
+        // Funny messages
+        const messages = [
+            "Herding students...", 
+            "Looking for missing pens...",
+            "Calculating coffee intake...",
+            "Asking the server nicely...", 
+            "Deciphering handwriting...",
+            "Counting heads...",
+            "Checking visa dates...",
+            "Polishing the dashboard..."
+        ];
+
+        let msgIdx = 0;
+        const msgInterval = setInterval(() => {
+            const el = document.getElementById("loadingMsg");
+            if (el) {
+                el.innerText = messages[msgIdx % messages.length];
+                msgIdx++;
+            }
+        }, 1500);
+
         async function loadData() {
             const loader = document.getElementById("loader");
             if (loader) loader.style.display = "flex";
@@ -473,7 +520,8 @@
                 if (json.groups) {
                     const pendingCount = json.groups.filter(g => g.source === 'pending').length;
                     if (pendingCount > 0) {
-                        if (loader) loader.querySelector(".fw-semibold").innerText = `Loading... (${pendingCount} remaining)`;
+                        const countEl = document.getElementById("pendingCount");
+                        if (countEl) countEl.innerText = `${pendingCount} units still loading...`;
                         setTimeout(loadData, 1000);
                         return;
                     }
@@ -483,7 +531,11 @@
                 alert("Error: " + e.message);
             } finally {
                 const stillLoading = (globalData && globalData.groups && globalData.groups.some(g => g.source === 'pending'));
-                if (!stillLoading && loader) loader.style.display = "none";
+                if (!stillLoading && loader) {
+                     clearInterval(msgInterval);
+                     loader.style.opacity = '0'; // Fade out
+                     setTimeout(() => loader.style.display = "none", 300);
+                }
             }
         }
 
