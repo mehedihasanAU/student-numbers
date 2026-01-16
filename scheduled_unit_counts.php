@@ -481,6 +481,28 @@ function fetchAndParseReport($baseUrl, $user, $pw)
                     'risk' => implode(", ", $risk)
                 ];
             }
+
+            // Populate granularGroups
+            // Key: UnitCode + Block + Campus + Lecturer
+            // We want to aggregate enrolled counts per specific group signature to avoid duplicate rows for every student
+            // OR if granularGroups meant "list of groups", we need to know the group ID?
+            // "ScheduledUnit" usually means "The Group".
+            // So one ScheduledUnitID = One Group.
+            // Let's aggregate by ScheduledUnitID.
+            if ($scheduledUnitId && $isEnrolled) {
+                if (!isset($granularGroups[$scheduledUnitId])) {
+                    $granularGroups[$scheduledUnitId] = [
+                        'id' => $scheduledUnitId,
+                        'unit_code' => $unitCode,
+                        'block' => $block,
+                        'campus' => $campus,
+                        'lecturer' => trim($lecturerFirst . ' ' . $lecturerLast),
+                        'capacity' => $maxParticipants,
+                        'enrolled_count' => 0
+                    ];
+                }
+                $granularGroups[$scheduledUnitId]['enrolled_count']++;
+            }
         }
     }
 
