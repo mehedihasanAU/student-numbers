@@ -307,6 +307,7 @@ function fetchAndParseReport($baseUrl, $user, $pw)
         $courseEnd = null;
         $firstName = null;
         $lastName = null;
+        $enrolStatusDesc = null;
 
         foreach ($row as $k => $v) {
             $kNorm = strtolower(str_replace(['_', ' '], '', $k));
@@ -346,6 +347,8 @@ function fetchAndParseReport($baseUrl, $user, $pw)
                 $firstName = $v;
             if ($kNorm === 'lastname')
                 $lastName = $v;
+            if ($kNorm === 'courseenrolmentstatusdescription')
+                $enrolStatusDesc = $v;
         }
 
         if (!$unitCode)
@@ -446,10 +449,25 @@ function fetchAndParseReport($baseUrl, $user, $pw)
                 }
             }
 
-            // 2. Academic Risk
-            if ($progression && stripos($progression, 'Good') === false && stripos($progression, 'Satisfactory') === false) {
-                // "Show Cause", "At Risk", "Probation"
-                $risk[] = "Academic: $progression";
+            // 2. Academic Risk / SAR
+            // Logic: Filter for "SAR", "Risk", "Probation", "Show Cause"
+            // Exclude "Good Standing" and "Satisfactory"
+            if ($progression) {
+                $p = strtolower($progression);
+                if (strpos($p, 'sar') !== false || strpos($p, 'risk') !== false || strpos($p, 'probation') !== false || strpos($p, 'show cause') !== false) {
+                    $risk[] = "Academic: $progression";
+                } elseif (strpos($p, 'good') === false && strpos($p, 'satisfactory') === false) {
+                    // Catch-all for other non-good statuses
+                    $risk[] = "Academic: $progression";
+                }
+            }
+
+            // 3. Encumbrance (Financial/Library Fines etc)
+            if ($enrolStatusDesc) {
+                $e = strtolower($enrolStatusDesc);
+                if (strpos($e, 'encumbered') !== false) {
+                    $risk[] = "Status: $enrolStatusDesc";
+                }
             }
 
             if (!empty($risk)) {
