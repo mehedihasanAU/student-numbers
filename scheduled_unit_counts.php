@@ -312,10 +312,7 @@ function fetchAndParseReport($baseUrl, $user, $pw)
         $enrolStatusDesc = null;
         $scheduledUnitId = null;
 
-        // DEBUG: Write headers to file once
-        if ($i === 0) {
-            file_put_contents(__DIR__ . '/debug_headers.json', json_encode(array_keys($row), JSON_PRETTY_PRINT));
-        }
+
 
         foreach ($row as $k => $v) {
             $kNorm = strtolower(str_replace(['_', ' '], '', $k));
