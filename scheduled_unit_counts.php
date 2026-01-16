@@ -613,7 +613,14 @@ if (!$force && file_exists($reportCachePath) && (time() - filemtime($reportCache
 if ($reportResult === null) {
     $reportResult = fetchAndParseReport($reportUrl, $apiUser, $apiPw);
     if ($reportResult) {
-        file_put_contents($reportCachePath, json_encode($reportResult));
+        // PERMISSION SAFETY: Only write if we can
+        if (!file_exists($CACHE_DIR)) {
+            @mkdir($CACHE_DIR, 0755, true);
+        }
+
+        if (is_dir($CACHE_DIR) && is_writable($CACHE_DIR)) {
+            @file_put_contents($reportCachePath, json_encode($reportResult));
+        }
     }
 }
 
