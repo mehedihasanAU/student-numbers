@@ -14,8 +14,7 @@ return [
 
     // Block Start Dates for 2026 (Found via analysis of debug dump)
     'block_dates' => [
-        '2026-01-02',
-        '2026-01-19', // Summer School
+        '2026-01-08', // Summer School / Key Intake (500 units found)
         '2026-02-23', // Block 1
         '2026-03-23', // Block 2
         '2026-05-04', // Block 3
