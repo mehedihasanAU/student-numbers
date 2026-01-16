@@ -35,11 +35,19 @@ function getCombinedScheduledUnits($config)
     foreach ($handles as $date => $ch) {
         $response = curl_multi_getcontent($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+
+        if ($httpCode !== 200) {
+            echo "[DEBUG] Failed for date {$date}. HTTP: {$httpCode}. Error: {$error}\n";
+            echo "[DEBUG] Response: " . substr($response, 0, 100) . "...\n";
+        }
 
         if ($httpCode === 200) {
             $data = json_decode($response, true);
             if (is_array($data)) {
                 $allUnits = array_merge($allUnits, $data);
+            } else {
+                echo "[DEBUG] JSON Decode failed for {$date}. Response snippet: " . substr($response, 0, 50) . "\n";
             }
         }
         curl_multi_remove_handle($mh, $ch);
