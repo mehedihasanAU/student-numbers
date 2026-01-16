@@ -665,6 +665,8 @@
             fetchSessionLabels();
 
             if (document.getElementById("kpiUnits")) document.getElementById("kpiUnits").innerText = unitCount.toLocaleString();
+
+            async function fetchSessionLabels() {
                 const labels = document.querySelectorAll('.session-label');
                 const queue = Array.from(labels).filter(l => !l.dataset.loaded);
                 
