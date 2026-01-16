@@ -320,9 +320,19 @@ function fetchAndParseReport($baseUrl, $user, $pw)
                 $unitCode = $v;
 
             // CAMPUS: Try strict then loose
-            if ($kNorm === 'location' || $kNorm === 'campusname' || $kNorm === 'campus') {
+            // Standard: Location, Campus Name, Campus
+            // Variations: Site, Venue, Delivery Location, Offering Location
+            if ($kNorm === 'location' || $kNorm === 'campusname' || $kNorm === 'campus' || $kNorm === 'site' || $kNorm === 'venue') {
                 $campus = $v;
-            } elseif (!$campus && (strpos($kNorm, 'campus') !== false || strpos($kNorm, 'location') !== false)) {
+            } elseif (
+                !$campus && (
+                    strpos($kNorm, 'campus') !== false ||
+                    strpos($kNorm, 'location') !== false ||
+                    strpos($kNorm, 'site') !== false ||
+                    strpos($kNorm, 'venue') !== false ||
+                    strpos($kNorm, 'delivery') !== false
+                )
+            ) {
                 $campus = $v;
             }
 
@@ -515,6 +525,8 @@ function fetchAndParseReport($baseUrl, $user, $pw)
 
     // structured_groups: [UnitCode][Block][] = {GroupObject}
     $structuredGroups = [];
+    $allGroupsFlat = []; // Fallback for 'groups' list if API List fetch failed
+
     foreach ($granularGroups as $g) {
         $u = $g['unit_code'];
         $b = $g['block'];
@@ -523,6 +535,16 @@ function fetchAndParseReport($baseUrl, $user, $pw)
         if (!isset($structuredGroups[$u][$b]))
             $structuredGroups[$u][$b] = [];
         $structuredGroups[$u][$b][] = $g;
+
+        // Add to flat list for KPIs
+        $allGroupsFlat[] = $g;
+    }
+
+    // If $groups (from API List) is empty, use the CSV-derived groups for the top-level KPIs
+    if (empty($groups) && !empty($allGroupsFlat)) {
+        $groups = $allGroupsFlat;
+        // Map keys to match expected frontend structure if needed, 
+        // but frontend largely uses length of this array for 'Total Groups'
     }
 
     return [
