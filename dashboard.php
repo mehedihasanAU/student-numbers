@@ -672,49 +672,57 @@
                 } else {
                     cards.forEach(card => {
                         const blockHtml = card.blockList.map(b => {
-
+                            
                             // Render Groups
                             const groupsHtml = b.groups.map(g => {
                                 const warn = (g.enrolled_count <= 10) ? ' <span class="text-danger fw-bold">!</span>' : '';
-                                const campusClass = g.campus === 'MEL' ? 'badge-mel' : (g.campus === 'SYD' ? 'badge-syd' : 'badge-comb');
-                                const lecturer = g.lecturer ? ` - <span class="text-muted fst-italic">${g.lecturer}</span>` : '';
+                                
+                                let badgeClass = "bg-secondary";
+                                let progressClass = "bg-primary";
+                                if (g.campus === 'MEL') { badgeClass = "bg-msg-mel text-dark border-info"; progressClass = "bg-info"; }
+                                if (g.campus === 'SYD') { badgeClass = "bg-msg-syd text-dark border-danger"; progressClass = "bg-danger"; }
+                                if (g.campus === 'COMB') { badgeClass = "bg-warning text-dark border-warning"; progressClass = "bg-warning"; }
+
+                                // Lecturer & ID
+                                const lecturer = g.lecturer ? `<div class="small text-secondary fst-italic mt-1"><i class="bi bi-person-circle me-1"></i>${g.lecturer}</div>` : '';
+                                const isSynthetic = g.is_synthetic;
+                                const groupIdDisplay = isSynthetic ? '' : `<span class="text-muted small ms-2" style="font-size:0.7rem;">#${g.id}</span>`;
 
                                 // Capacity Bar
                                 let progHtml = "";
                                 if (g.capacity > 0) {
                                     const pct = Math.min(100, Math.round((g.enrolled_count / g.capacity) * 100));
-                                    let color = "bg-primary";
-                                    if (pct > 90) color = "bg-danger";
-                                    else if (pct > 75) color = "bg-warning";
-                                    else if (pct < 30) color = "bg-info";
-
+                                    let color = progressClass;
+                                    if (pct > 95) color = "bg-danger";
+                                    
                                     progHtml = `
-                                    <div class="d-flex align-items-center gap-2 mt-1" style="font-size:0.75rem;">
-                                        <div class="progress flex-grow-1" style="height:6px;">
+                                    <div class="d-flex align-items-center gap-2 mt-1" style="font-size:0.7rem;">
+                                        <div class="progress flex-grow-1" style="height:4px;">
                                             <div class="progress-bar ${color}" role="progressbar" style="width: ${pct}%"></div>
                                         </div>
-                                        <span class="fw-bold text-dark">${g.enrolled_count}/${g.capacity}</span>
+                                        <span class="text-muted">${g.enrolled_count}/${g.capacity}</span>
                                     </div>`;
                                 }
 
                                 return `
-                                <div class="mb-2 pb-2 border-bottom border-light">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div>
-                                            <span class="campus-badge ${campusClass}">${g.campus}</span>
-                                            <span class="small fw-bold ms-1 text-dark">${g.enrolled_count} students</span>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge ${badgeClass} bg-opacity-25 border me-2" style="min-width:45px;">${g.campus}</span>
+                                            <span class="fw-bold text-dark small">${g.enrolled_count} students</span>
                                             ${warn}
-                                            <span class="small">${lecturer}</span>
+                                            ${groupIdDisplay}
                                         </div>
                                     </div>
+                                    ${lecturer}
                                     ${progHtml}
                                 </div>`;
                             }).join("");
 
                             return `
                             <div class="block-section mb-3">
-                                <div class="fw-bold text-secondary small text-uppercase mb-2" style="letter-spacing:0.5px;">${b.name}</div>
-                                <div class="ps-2 border-start border-3 border-light">
+                                <h6 class="text-uppercase text-secondary fw-bold small border-bottom pb-1 mb-2">${b.name}</h6>
+                                <div class="ps-1">
                                     ${groupsHtml}
                                 </div>
                             </div>
@@ -724,23 +732,24 @@
                         let summaryHtml = '';
                         if (card.breakdown) {
                             summaryHtml += '<div class="mb-3 d-flex justify-content-center gap-2">';
-                            if (card.breakdown.mel > 0) summaryHtml += `<span class="badge badge-mel border-0">MEL: ${card.breakdown.mel}</span>`;
-                            if (card.breakdown.syd > 0) summaryHtml += `<span class="badge badge-syd border-0">SYD: ${card.breakdown.syd}</span>`;
-                            if (card.breakdown.comb > 0) summaryHtml += `<span class="badge badge-comb border-0">COMB: ${card.breakdown.comb}</span>`;
+                            // Using the same badge classes for consistency
+                            if (card.breakdown.mel > 0) summaryHtml += `<span class="badge bg-msg-mel text-dark border border-info">MEL: ${card.breakdown.mel}</span>`;
+                            if (card.breakdown.syd > 0) summaryHtml += `<span class="badge bg-msg-syd text-dark border border-danger">SYD: ${card.breakdown.syd}</span>`;
+                            if (card.breakdown.comb > 0) summaryHtml += `<span class="badge bg-warning text-dark border border-warning">COMB: ${card.breakdown.comb}</span>`;
                             summaryHtml += '</div>';
                         }
 
                         const div = document.createElement("div");
-                        div.className = "col";
+                        div.className = "col-md-6 col-lg-4 mb-4 fade-in-up"; 
                         div.innerHTML = `
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="unit-code">${card.unitCode}</span>
-                                <span class="unit-total">${card.unitTotal} Students</span>
-                            </div>
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-header bg-white border-bottom-0 pt-3 d-flex justify-content-between align-items-center">
+                            <h5 class="card-title text-success fw-bold mb-0">${card.unitCode}</h5>
+                            <span class="badge bg-success">${card.unitTotal} Students</span>
+                        </div>
+                        <div class="card-body pt-0">
                             ${summaryHtml}
-                            <div class="mt-3 text-start small">
+                            <div class="mt-3">
                                 ${blockHtml}
                             </div>
                         </div>
