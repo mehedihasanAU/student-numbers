@@ -669,11 +669,17 @@
             // fetchSessionLabels();
 
             if (document.getElementById("kpiUnits")) document.getElementById("kpiUnits").innerText = unitCount.toLocaleString();
-
+            
             async function fetchSessionLabels() {
+                const btn = document.getElementById("btnLoadLabels");
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Loading...`;
+                }
+
                 const labels = document.querySelectorAll('.session-label');
                 const queue = Array.from(labels).filter(l => !l.dataset.loaded);
-
+                
                 // Process in small chunks to avoid flooding
                 const CHUNK_SIZE = 5;
                 for (let i = 0; i < queue.length; i += CHUNK_SIZE) {
@@ -681,12 +687,12 @@
                     await Promise.all(chunk.map(async (el) => {
                         const id = el.dataset.groupId;
                         if (!id) return;
-
+                        
                         try {
                             // Call our proxy script
                             const res = await fetch(`scheduled_unit_sessions.php?id=${id}`);
                             const json = await res.json();
-
+                            
                             // Expecting json to be an array of sessions. 
                             // We grab the first 'session_subject' that matches? 
                             // Or just the first one if it's the group ID.
@@ -704,6 +710,14 @@
                             el.dataset.loaded = "true";
                         }
                     }));
+                }
+                
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<i class="bi bi-check-circle-fill me-1"></i> Done`;
+                    setTimeout(() => {
+                         btn.innerHTML = `<i class="bi bi-tags-fill me-1"></i> Load Names`;
+                    }, 3000);
                 }
             }
 
