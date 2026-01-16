@@ -70,15 +70,14 @@ function getCombinedScheduledUnits($config)
         echo "Sample Unit End\n";
     }
 
-    // Extract strictly the IDs
+    // Extract IDs - mapping CSV 'Sched unit ID' to API 'eduScheduledUnitId' or 'id'
     $ids = [];
     foreach ($allUnits as $unit) {
+        if (isset($unit['eduScheduledUnitId'])) {
+            $ids[] = $unit['eduScheduledUnitId'];
+        }
         if (isset($unit['id'])) {
             $ids[] = $unit['id'];
-        } elseif (isset($unit['Id'])) {
-            $ids[] = $unit['Id'];
-        } elseif (isset($unit['scheduledUnitId'])) {
-            $ids[] = $unit['scheduledUnitId'];
         }
     }
     return array_unique($ids);
