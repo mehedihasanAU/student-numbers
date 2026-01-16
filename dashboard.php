@@ -246,6 +246,9 @@
             <div class="ms-auto d-flex gap-3">
                 <input type="text" id="searchInput" class="form-control search-input"
                     placeholder="Search units or blocks..." style="width: 280px;">
+                 <button class="btn btn-outline-success rounded-pill px-3 fw-medium text-nowrap" id="btnLoadLabels" onclick="fetchSessionLabels()">
+                    <i class="bi bi-tags-fill me-1"></i> Load Names
+                 </button>
                 <button id="btnRefresh" class="btn btn-dark rounded-pill px-4 fw-medium">Refresh</button>
             </div>
         </div>
