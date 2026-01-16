@@ -458,6 +458,13 @@
                 if (unitCode === "MATERIAL_FEE") continue;
 
                 // Initialize sums
+                let unitTotal = 0;
+                const blockList = [];
+
+                // Pre-calculate unit metadata
+                const uMeta = unitMeta[unitCode] || {};
+                const prog = getProgram(uMeta.course_name, unitCode);
+
                 let totalMel = 0;
                 let totalSyd = 0;
                 let totalComb = 0;
