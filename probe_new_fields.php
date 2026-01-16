@@ -27,7 +27,8 @@ $targets = [
     'maximum_participants',
     'visa_expire_date',
     'progression_status_description',
-    'course_start_date' // For cohort analysis
+    'course_enrolment_status_description', // New: For Encumbrance
+    'course_start_date'
 ];
 
 // Check coverage
