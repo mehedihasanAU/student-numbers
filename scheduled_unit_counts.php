@@ -18,8 +18,10 @@ $CONNECT_TIMEOUT = $config['connect_timeout'];
 $TIMEOUT = $config['timeout'];
 $CONCURRENCY = $config['concurrency'];
 
-ini_set('memory_limit', '1024M'); // Increase memory for large report
-set_time_limit(300); // 5 minutes max
+// Safety wrapper for restricted environments
+@ini_set('memory_limit', '1024M');
+@set_time_limit(300);
+
 
 // Caching (disk)
 $CACHE_DIR = __DIR__ . "/.cache_paradigm";
