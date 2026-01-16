@@ -503,6 +503,7 @@
             const cards = [];
 
             const activeUnitCodes = new Set(); // Re-added to fix ReferenceError
+            const riskItems = []; // Re-added to fix ReferenceError
 
             const search = document.getElementById("searchInput") ? document.getElementById("searchInput").value.trim().toLowerCase() : "";
 
