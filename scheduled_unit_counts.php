@@ -308,6 +308,7 @@ function fetchAndParseReport($baseUrl, $user, $pw)
         $firstName = null;
         $lastName = null;
         $enrolStatusDesc = null;
+        $scheduledUnitId = null;
 
         foreach ($row as $k => $v) {
             $kNorm = strtolower(str_replace(['_', ' '], '', $k));
@@ -315,8 +316,10 @@ function fetchAndParseReport($baseUrl, $user, $pw)
             // Existing Mappings
             if ($kNorm === 'scheduledunitcode' || $kNorm === 'unitcode')
                 $unitCode = $v;
-            if (strpos($kNorm, 'campus') !== false || strpos($kNorm, 'institution') !== false)
+            if ($kNorm === 'campus' || $kNorm === 'institution')
                 $campus = $v;
+            if ($kNorm === 'id' || $kNorm === 'scheduledunitid' || $kNorm === 'eduscheduledunitid')
+                $scheduledUnitId = $v;
             if (strpos($kNorm, 'enrolmentstatus') !== false && strpos($kNorm, 'unit') !== false)
                 $status = $v;
             if (strpos($kNorm, 'startdate') !== false && strpos($kNorm, 'unit') !== false)
@@ -426,15 +429,12 @@ function fetchAndParseReport($baseUrl, $user, $pw)
             }
         }
 
-        // Unit Details (Capture first occurrence per Block)
-        if (!isset($unitDetails[$unitCode]))
-            $unitDetails[$unitCode] = [];
-        if (!isset($unitDetails[$unitCode][$block])) {
-            $lecturerName = trim($lecturerFirst . ' ' . $lecturerLast);
-            $unitDetails[$unitCode][$block] = [
-                'lecturer' => $lecturerName,
-                'capacity' => $maxParticipants
-            ];
+        if ($isEnrolled && $unitCode) {
+            // Use Scheduled Unit ID as unique key for "Group"
+            // If not present, fallback to a synthetic key (Unit+Block+Campus)
+            $groupId = $v['scheduled_unit_id'] ?? $v['id'] ?? ($unitCode . $block . $campus); // Try to get ID from row if mapped
+
+            // We need to map 'id' in the loop first.
         }
 
         // Risk Analysis (Visa & Academic) - Check ALL students or just Enrolled? 
@@ -489,9 +489,26 @@ function fetchAndParseReport($baseUrl, $user, $pw)
         'meta' => $unitMeta,
         'unique_student_count' => count($uniqueStudents),
         'status_counts' => $statusCounts,
+    // structured_groups: [UnitCode][Block][] = {GroupObject}
+    $structuredGroups = [];
+    foreach ($granularGroups as $g) {
+        $u = $g['unit_code'];
+        $b = $g['block'];
+        if (!isset($structuredGroups[$u])) $structuredGroups[$u] = [];
+        if (!isset($structuredGroups[$u][$b])) $structuredGroups[$u][$b] = [];
+        $structuredGroups[$u][$b][] = $g;
+    }
+
+    return [
+        'counts' => $counts,
+        'detailed' => $detailedCounts, // Keep for backward compat if needed
+        'meta' => $unitMeta,
+        'unique_student_count' => count($uniqueStudents),
+        'status_counts' => $statusCounts,
         'unit_details' => $unitDetails,
         'student_risks' => $studentRisks,
-        'retention_data' => $retentionData
+        'retention_data' => $retentionData,
+        'detailed_groups' => $structuredGroups // Validated granular data
     ];
 }
 
