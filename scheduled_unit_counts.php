@@ -318,8 +318,13 @@ function fetchAndParseReport($baseUrl, $user, $pw)
             // Existing Mappings
             if ($kNorm === 'scheduledunitcode' || $kNorm === 'unitcode')
                 $unitCode = $v;
-            if ($kNorm === 'campus' || $kNorm === 'institution')
+            if ($kNorm === 'location' || $kNorm === 'campusname' || $kNorm === 'campus')
                 $campus = $v;
+            // Fallback for Campus if standard keys miss
+            if (!$campus && stripos($k, 'campus') !== false) {
+                $campus = $v;
+            }
+
             if ($kNorm === 'id' || $kNorm === 'scheduledunitid' || $kNorm === 'eduscheduledunitid')
                 $scheduledUnitId = $v;
             if (strpos($kNorm, 'enrolmentstatus') !== false && strpos($kNorm, 'unit') !== false)
@@ -367,8 +372,6 @@ function fetchAndParseReport($baseUrl, $user, $pw)
             $statusCounts['Enrolled']++;
         } else {
             $statusCounts['Other']++;
-            // We usually only count enrolled students for numbers, but maybe we want risks for all?
-            // stick to enrolled for consistency
         }
 
         if ($studentId)
@@ -399,7 +402,64 @@ function fetchAndParseReport($baseUrl, $user, $pw)
         $campusUpper = strtoupper(trim($campus));
         if ($campusUpper === 'AIHE')
             $campus = 'SYD';
-        elseif ($campusUpper === 'CAMPUS_MEL' || $campusUpper === 'MEL')
+
+        // ... existing risk logic ... 
+
+        // 3. Encumbrance (Financial/Library Fines etc)
+        // ... (risk population) ...
+
+        if ($isEnrolled) {
+            // Check Risk logic specifically for this student
+            $risk = [];
+            // 1. Visa Risk
+            if ($visaExpire && $courseEnd) {
+                if ($visaExpire < $courseEnd) {
+                    $risk[] = "Visa: Visa expires ($visaExpire) before Course End ($courseEnd)";
+                }
+            }
+
+            // 2. Academic Risk
+            if ($progression) {
+                $p = strtolower($progression);
+                if (strpos($p, 'sar') !== false || strpos($p, 'risk') !== false || strpos($p, 'probation') !== false || strpos($p, 'show cause') !== false) {
+                    $risk[] = "Academic: $progression";
+                } elseif (strpos($p, 'good') === false && strpos($p, 'satisfactory') === false && !empty($p)) {
+                    $risk[] = "Academic: $progression";
+                }
+            }
+
+            // 3. Encumbrance
+            if ($enrolStatusDesc) {
+                $e = strtolower($enrolStatusDesc);
+                if (strpos($e, 'encumbered') !== false) {
+                    $risk[] = "Status: $enrolStatusDesc";
+                }
+            }
+
+            if (!empty($risk)) {
+                // DEDUPLICATION FIX:
+                // Use Key: StudentID + Risk Type
+                // We ignore Unit Code in the key so we don't show the student 4 times for the same Course Risk.
+                $riskString = implode(", ", $risk);
+                $riskKey = $studentId . '_' . md5($riskString);
+
+                if (!isset($uniqueRisks[$riskKey])) {
+                    $uniqueRisks[$riskKey] = true;
+                    $studentRisks[] = [
+                        'id' => $studentId,
+                        'name' => trim($firstName . ' ' . $lastName),
+                        'unit' => 'Multiple/All', // Since we merge, we can't show just one unit. Or we could logic this.
+                        // Actually, user might want to know if it's specific. But SAR is course wide.
+                        'course' => $courseName,
+                        'campus' => $campus,
+                        'risk' => $riskString
+                    ];
+                }
+            }
+
+            // Populate granularGroups
+            // ... existing granular logic ...
+        } elseif ($campusUpper === 'CAMPUS_MEL' || $campusUpper === 'MEL')
             $campus = 'MEL';
         elseif ($campusUpper === 'CAMPUS_COMB' || $campusUpper === 'COMB')
             $campus = 'COMB';
@@ -439,61 +499,6 @@ function fetchAndParseReport($baseUrl, $user, $pw)
             // We need to map 'id' in the loop first.
         }
 
-        // Risk Analysis (Visa & Academic) - Check ALL students or just Enrolled? 
-        // Let's check Enrolled for now to be actionable.
-        if ($isEnrolled && $studentId) {
-            $risk = [];
-
-            // 1. Visa Risk
-            if ($visaExpire && $courseEnd) {
-                if ($visaExpire < $courseEnd) {
-                    $risk[] = "Visa expires ($visaExpire) before course end ($courseEnd)";
-                }
-            }
-
-            // 2. Academic Risk / SAR
-            // Logic: Filter for "SAR", "Risk", "Probation", "Show Cause"
-            // Exclude "Good Standing" and "Satisfactory"
-            if ($progression) {
-                $p = strtolower($progression);
-                if (strpos($p, 'sar') !== false || strpos($p, 'risk') !== false || strpos($p, 'probation') !== false || strpos($p, 'show cause') !== false) {
-                    $risk[] = "Academic: $progression";
-                } elseif (strpos($p, 'good') === false && strpos($p, 'satisfactory') === false) {
-                    // Catch-all for other non-good statuses
-                    $risk[] = "Academic: $progression";
-                }
-            }
-
-            // 3. Encumbrance (Financial/Library Fines etc)
-            if ($enrolStatusDesc) {
-                $e = strtolower($enrolStatusDesc);
-                if (strpos($e, 'encumbered') !== false) {
-                    $risk[] = "Status: $enrolStatusDesc";
-                }
-            }
-
-            if (!empty($risk)) {
-                // Deduplicate Risks (User reported same name appearing multiple times)
-                // Use a unique key: ID + UnitCode + RiskString
-                $riskKey = $studentId . '_' . $unitCode . '_' . md5(implode($risk));
-                if (!isset($uniqueRisks[$riskKey])) {
-                    $uniqueRisks[$riskKey] = true;
-                    $studentRisks[] = [
-                        'id' => $studentId,
-                        'name' => trim($firstName . ' ' . $lastName),
-                        'unit' => $unitCode,
-                        'course' => $courseName,
-                        'campus' => $campus,
-                        'risk' => implode(", ", $risk)
-                    ];
-                }
-            }
-
-            // Populate granularGroups
-            // Key: UnitCode + Block + Campus + Lecturer
-            // We want to aggregate enrolled counts per specific group signature to avoid duplicate rows for every student
-            // OR if granularGroups meant "list of groups", we need to know the group ID?
-            // "ScheduledUnit" usually means "The Group".
             // So one ScheduledUnitID = One Group.
             // Let's aggregate by ScheduledUnitID.
             if ($scheduledUnitId && $isEnrolled) {
