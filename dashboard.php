@@ -479,16 +479,17 @@
         const API_URL = "scheduled_unit_counts.php";
         let globalData = null;
 
-        // Funny messages (Academic Theme)
+        // Funny messages (Team Theme)
         const messages = [
+            "Waking up Rob and Annie's Paradigm (Coffee required)...", 
+            "Investigating Mehedi and Sajan's \"Organised Chaos\"...", 
+            "Checking in with our SX First Responders...", 
+            "Giving Rian's SAR a gentle, reassuring pat...", 
+            "Translating Bryn's Vision into Metrics...", 
+            "Attempting to Locate Gordon's Retention KPI... Just hanging in there.",
             "Chasing lecturers for grades...",
-            "Finding empty classrooms...",
-            "Deciphering handwriting...",
             "Counting coffee cups...",
-            "Checking library fines...",
-            "Formatting citations...",
-            "Submitting assignments late...",
-            "Waking up the server..."
+            "Finding empty classrooms..."
         ];
 
         let msgIdx = 0;
