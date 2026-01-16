@@ -568,13 +568,18 @@
             let totalScheduledGroups = expectedGroups.length || 0;
             const cards = [];
 
-            const activeUnitCodes = new Set(); // Re-added to fix ReferenceError
-            const riskItems = []; // Re-added to fix ReferenceError
+            // Reset collections
+            const activeUnitCodes = new Set();
+            const riskItems = [];
+            if (typeof window.riskItems !== 'undefined') window.riskItems = riskItems; // sync global if needed
 
             const search = document.getElementById("searchInput") ? document.getElementById("searchInput").value.trim().toLowerCase() : "";
 
+            // If unitGroups is empty (PHP [] -> JS []), handle it
+            const entries = Array.isArray(unitGroups) ? [] : Object.entries(unitGroups);
+
             // Iterate Units
-            for (const [unitCode, blocks] of Object.entries(unitGroups)) {
+            for (const [unitCode, blocks] of entries) {
                 if (unitCode === "MATERIAL_FEE") continue;
 
                 let unitTotal = 0;
