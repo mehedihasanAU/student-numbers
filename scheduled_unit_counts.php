@@ -288,6 +288,7 @@ function fetchAndParseReport($baseUrl, $user, $pw)
     $unitDetails = []; // [UnitCode][Block] => {lecturer, capacity}
     $studentRisks = [];
     $retentionData = []; // [Block] => [StudentIDs]
+    $granularGroups = [];
 
     foreach ($rows as $row) {
         $unitCode = null;

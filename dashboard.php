@@ -225,6 +225,10 @@
                             type="button">⚡ Group Suggestions (Early Finishers)</button>
                     </li>
                     <li class="nav-item">
+                        <button class="nav-link" id="pills-risk-tab" data-bs-toggle="pill" data-bs-target="#pills-risk"
+                            type="button">⚠ At Risk Students</button>
+                    </li>
+                    <li class="nav-item">
                         <button class="nav-link" id="pills-reten-tab" data-bs-toggle="pill"
                             data-bs-target="#pills-reten" type="button">📊 Retention Analysis</button>
                     </li>
@@ -304,7 +308,12 @@
                     <div class="tab-pane fade" id="pills-reten">
                         <div class="card shadow-sm border-0">
                             <div class="card-body">
-                                <h5 class="card-title fw-bold text-secondary mb-4">Block-to-Block Retention Flow</h5>
+                                <h5 class="card-title fw-bold text-secondary mb-2">Block-to-Block Retention Flow</h5>
+                                <p class="small text-muted mb-4">
+                                    Shows the percentage of unique students from one block who are also enrolled in the
+                                    subsequent block.
+                                    <br><em>(e.g., How many students from Block 1 continued into Block 2)</em>
+                                </p>
                                 <div id="retentionFlow"
                                     class="d-flex flex-wrap gap-4 align-items-center justify-content-center py-5">
                                     <!-- Injected via JS -->
