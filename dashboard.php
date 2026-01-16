@@ -661,11 +661,10 @@
                 </span>
             </div>`;
             }
-                // Trigger session label fetch for visible cards
-                fetchSessionLabels();
-            }
+            // Trigger session label fetch for visible cards
+            fetchSessionLabels();
 
-            async function fetchSessionLabels() {
+            if (document.getElementById("kpiUnits")) document.getElementById("kpiUnits").innerText = unitCount.toLocaleString();
                 const labels = document.querySelectorAll('.session-label');
                 const queue = Array.from(labels).filter(l => !l.dataset.loaded);
                 
