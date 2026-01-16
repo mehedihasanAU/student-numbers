@@ -318,14 +318,20 @@ function fetchAndParseReport($baseUrl, $user, $pw)
             // Existing Mappings
             if ($kNorm === 'scheduledunitcode' || $kNorm === 'unitcode')
                 $unitCode = $v;
-            if ($kNorm === 'location' || $kNorm === 'campusname' || $kNorm === 'campus')
+
+            // CAMPUS: Try strict then loose
+            if ($kNorm === 'location' || $kNorm === 'campusname' || $kNorm === 'campus') {
                 $campus = $v;
-            // Fallback for Campus if standard keys miss
-            if (!$campus && stripos($k, 'campus') !== false) {
+            } elseif (!$campus && (strpos($kNorm, 'campus') !== false || strpos($kNorm, 'location') !== false)) {
                 $campus = $v;
             }
 
+            // ID: Try strict then loose variants
             if ($kNorm === 'id' || $kNorm === 'scheduledunitid' || $kNorm === 'eduscheduledunitid')
+                $scheduledUnitId = $v;
+            elseif (!$scheduledUnitId && strpos($kNorm, 'scheduledunitid') !== false)
+                $scheduledUnitId = $v;
+            elseif (!$scheduledUnitId && $kNorm === 'unitid') // Common variation
                 $scheduledUnitId = $v;
             if (strpos($kNorm, 'enrolmentstatus') !== false && strpos($kNorm, 'unit') !== false)
                 $status = $v;
@@ -482,19 +488,27 @@ function fetchAndParseReport($baseUrl, $user, $pw)
             }
 
             // Granular Groups Population
-            if ($scheduledUnitId) {
-                if (!isset($granularGroups[$scheduledUnitId])) {
-                    $granularGroups[$scheduledUnitId] = [
-                        'id' => $scheduledUnitId,
+            // Fallback: If no ScheduledUnitID, create a synthetic one so we still display the card
+            $gid = $scheduledUnitId;
+            if (!$gid) {
+                // Synthetic ID: UnitCode + Block + Campus
+                $gid = "SYN-" . md5($unitCode . $block . $campus);
+            }
+
+            if ($gid) {
+                if (!isset($granularGroups[$gid])) {
+                    $granularGroups[$gid] = [
+                        'id' => $scheduledUnitId ? $scheduledUnitId : $gid, // Keep original if exists
                         'unit_code' => $unitCode,
                         'block' => $block,
                         'campus' => $campus,
                         'lecturer' => trim($lecturerFirst . ' ' . $lecturerLast),
                         'capacity' => $maxParticipants,
-                        'enrolled_count' => 0
+                        'enrolled_count' => 0,
+                        'is_synthetic' => !$scheduledUnitId
                     ];
                 }
-                $granularGroups[$scheduledUnitId]['enrolled_count']++;
+                $granularGroups[$gid]['enrolled_count']++;
             }
         }
     }
