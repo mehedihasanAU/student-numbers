@@ -28,7 +28,7 @@ jobs:
           # server-dir: ./
           # Use active mode to bypass passive port issues
           passive: false
-          server-dir: ./httpdocs/student-numbers/test/
+          server-dir: ./httpdocs/public/student-numbers/test/
           exclude: |
             **/.git*
             **/.git*/**
