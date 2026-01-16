@@ -1,0 +1,14 @@
+
+# System
+.DS_Store
+
+# Logs and Debug
+*.log
+debug_report_dump.json
+
+# Cache
+.cache_paradigm/
+
+# Temporary/Output
+probe_results.json
+debug_output_*.json

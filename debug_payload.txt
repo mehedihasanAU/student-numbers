@@ -1,0 +1,25 @@
+Array
+(
+    [cancelledParticipants] => 0
+    [createdByUserLogin] => Qurat.Siddiqui
+    [createdDate] => 20250929T15:42:01
+    [currentParticipants] => 0
+    [destCensusDate] => 20260125T00:00:00
+    [destE464] => 801010
+    [destE622] => 0
+    [eduOtherUnitId] => BBUS1001
+    [eduScheduledUnitId] => 15835
+    [eduUnitId] => 10243
+    [endDate] => 20260213T00:00:00
+    [lastModifiedByUserLogin] => Qurat.Siddiqui
+    [lastModifiedDate] => 20260115T09:46:36
+    [maximumParticipants] => 30
+    [minimumParticipants] => 0
+    [modeOfDelivery] => HYBRID_1
+    [providerPartyId] => 28060
+    [startDate] => 20260119T00:00:00
+    [timePeriodId] => AY_2026_BLK_SUMMER
+    [transferredParticipants] => 0
+    [unitName] => Accounting for Business Decisions
+    [unitStatusId] => UNIT_UNCONFIRMED
+)
