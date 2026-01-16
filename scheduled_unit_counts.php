@@ -457,6 +457,8 @@ function fetchAndParseReport($baseUrl, $user, $pw)
                     'id' => $studentId,
                     'name' => trim($firstName . ' ' . $lastName),
                     'unit' => $unitCode,
+                    'course' => $courseName,
+                    'campus' => $campus,
                     'risk' => implode(", ", $risk)
                 ];
             }
@@ -568,6 +570,9 @@ echo json_encode([
     "status_counts" => $reportResult['status_counts'] ?? ['Enrolled' => 0, 'Other' => 0],
     "campus_breakdown" => $reportCounts,
     "campus_breakdown_detail" => $reportResult['detailed'] ?? [],
+    "unit_details" => $reportResult['unit_details'] ?? [],
+    "risk_data" => $reportResult['student_risks'] ?? [],
+    "retention_data" => $reportResult['retention_data'] ?? [],
     "meta" => $reportResult['meta'] ?? [],
     "groups" => $groups,
 ], JSON_UNESCAPED_SLASHES);
