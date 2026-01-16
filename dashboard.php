@@ -9,8 +9,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <title>Enrolment Insights</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
     <style>
         :root {
             --aih-green-primary: #256B37;
@@ -44,7 +45,8 @@
         .btn-primary {
             background-color: var(--aih-green-primary);
             border-color: var(--aih-green-primary);
-            border-radius: 2px; /* Sharp corners per brand */
+            border-radius: 2px;
+            /* Sharp corners per brand */
             font-weight: 600;
             padding: 8px 20px;
         }
@@ -56,15 +58,16 @@
 
         .card {
             border: 1px solid var(--card-border);
-            border-radius: 4px; /* Slightly sharper */
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            border-radius: 4px;
+            /* Slightly sharper */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             background: #fff;
         }
 
         .card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
             border-color: var(--aih-green-light);
         }
 
@@ -82,12 +85,12 @@
             padding: 4px 12px;
             border-radius: 2px;
         }
-        
+
         .nav-pills .nav-link.active {
             background-color: var(--aih-green-primary);
             border-radius: 2px;
         }
-        
+
         .nav-pills .nav-link {
             color: var(--aih-text-dark);
             font-weight: 600;
@@ -179,9 +182,18 @@
             border-radius: 3px;
             background-color: #f3f4f6;
         }
-        
+
         .progress-bar {
             border-radius: 3px;
+        }
+
+        /* Bootstrap Overrides for Theme */
+        .bg-primary {
+            background-color: var(--aih-green-primary) !important;
+        }
+
+        .text-primary {
+            color: var(--aih-green-primary) !important;
         }
     </style>
 </head>
