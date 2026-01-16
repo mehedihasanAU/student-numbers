@@ -1,11 +1,19 @@
 <?php
 require 'config.php';
 
-// 1. Fetch live data using the same logic as scheduled_unit_counts.php
-// We reuse the basic structure but only care about the list of IDs
+// Enable errors
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+echo "Starting verification...\n";
+
+if (!function_exists('curl_multi_init')) {
+    die("CRITICAL: curl_multi_init is NOT available on this server.\n");
+}
 
 function getCombinedScheduledUnits($config)
 {
+    echo "Fetching for dates: " . implode(", ", $config['block_dates']) . "\n";
     $allUnits = [];
     $mh = curl_multi_init();
     $handles = [];
