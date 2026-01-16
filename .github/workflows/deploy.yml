@@ -25,7 +25,10 @@ jobs:
           # If it is at the server root, change to './httpdocs/student-numbers/test/' or similar.
           protocol: ftp
           port: 21
-          server-dir: ./httpdocs/student-numbers/test/
+          # server-dir: ./
+          # Use active mode to bypass passive port issues
+          passive: false
+          server-dir: ./
           exclude: |
             **/.git*
             **/.git*/**
