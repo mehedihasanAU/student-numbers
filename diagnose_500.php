@@ -55,16 +55,19 @@ if (!file_exists($cacheDir)) {
     }
 }
 
-echo "\n--- STEP 4: FETCH TEST ---\n";
-echo "Attempting simple connectivity check to: " . $config['report_url'] . "\n";
+echo "\n--- STEP 4: FETCH TEST (PARADIGM) ---\n";
+echo "Attempting connectivity check to: " . $config['report_url'] . "\n";
 
 $ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $config['report_url'] . "&limit=1"); // Tiny fetch
+curl_setopt($ch, CURLOPT_URL, $config['report_url'] . "&limit=1");
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_USERPWD, $config['api_user'] . ":" . $config['api_pw']);
 curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4); // Force IPv4
+curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"); // Mimic Browser
+
 $data = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $err = curl_error($ch);
@@ -72,12 +75,25 @@ curl_close($ch);
 
 echo "HTTP Code: $httpCode\n";
 if ($httpCode == 200) {
-    echo "Success: Connectivity OK.\n";
-    echo "Data Length: " . strlen($data) . " bytes\n";
+    echo "Success: Paradigm Connectivity OK.\n";
 } else {
-    echo "FAILURE: cURL Request Failed.\n";
+    echo "FAILURE: Paradigm Request Failed.\n";
     echo "Error: $err\n";
-    echo "Response Snippet: " . substr($data, 0, 200) . "\n";
+}
+
+echo "\n--- STEP 5: CONTROL TEST (GOOGLE) ---\n";
+$ch2 = curl_init();
+curl_setopt($ch2, CURLOPT_URL, "https://www.google.com");
+curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch2, CURLOPT_TIMEOUT, 5);
+curl_exec($ch2);
+$httpCode2 = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
+curl_close($ch2);
+
+if ($httpCode2 >= 200 && $httpCode2 < 400) {
+    echo "Control Test (Google): SUCCESS (Server has Internet).\n";
+} else {
+    echo "Control Test (Google): FAILED (Server might be offline or blocked completely).\n";
 }
 
 echo "\n--- DIAGNOSTIC END ---\n";
