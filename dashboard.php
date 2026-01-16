@@ -481,11 +481,11 @@
 
         // Funny messages (Team Theme)
         const messages = [
-            "Waking up Rob and Annie's Paradigm (Coffee required)...", 
-            "Investigating Mehedi and Sajan's \"Organised Chaos\"...", 
-            "Checking in with our SX First Responders...", 
-            "Giving Rian's SAR a gentle, reassuring pat...", 
-            "Translating Bryn's Vision into Metrics...", 
+            "Waking up Rob and Annie's Paradigm (Coffee required)...",
+            "Investigating Mehedi and Sajan's \"Organised Chaos\"...",
+            "Checking in with our SX First Responders...",
+            "Giving Rian's SAR a gentle, reassuring pat...",
+            "Translating Bryn's Vision into Metrics...",
             "Attempting to Locate Gordon's Retention KPI... Just hanging in there."
         ];
 
@@ -501,7 +501,7 @@
         async function loadData() {
             const loader = document.getElementById("loader");
             if (loader) loader.style.display = "flex";
-            
+
             // Artificial delay start time
             const startTime = Date.now();
             const MIN_LOADING_TIME = 3000; // 3 seconds minimum to show funny messages
@@ -514,11 +514,11 @@
                 clearTimeout(timeoutId);
                 if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
                 const json = await res.json();
-                
+
                 // Calculate remaining time to wait
                 const elapsed = Date.now() - startTime;
                 const remaining = Math.max(0, MIN_LOADING_TIME - elapsed);
-                
+
                 // Wait the remaining time if needed
                 if (remaining > 0) {
                     await new Promise(r => setTimeout(r, remaining));
@@ -661,7 +661,46 @@
                 </span>
             </div>`;
             }
-            if (document.getElementById("kpiUnits")) document.getElementById("kpiUnits").innerText = unitCount.toLocaleString();
+                // Trigger session label fetch for visible cards
+                fetchSessionLabels();
+            }
+
+            async function fetchSessionLabels() {
+                const labels = document.querySelectorAll('.session-label');
+                const queue = Array.from(labels).filter(l => !l.dataset.loaded);
+                
+                // Process in small chunks to avoid flooding
+                const CHUNK_SIZE = 5;
+                for (let i = 0; i < queue.length; i += CHUNK_SIZE) {
+                    const chunk = queue.slice(i, i + CHUNK_SIZE);
+                    await Promise.all(chunk.map(async (el) => {
+                        const id = el.dataset.groupId;
+                        if (!id) return;
+                        
+                        try {
+                            // Call our proxy script
+                            const res = await fetch(`scheduled_unit_sessions.php?id=${id}`);
+                            const json = await res.json();
+                            
+                            // Expecting json to be an array of sessions. 
+                            // We grab the first 'session_subject' that matches? 
+                            // Or just the first one if it's the group ID.
+                            if (Array.isArray(json) && json.length > 0) {
+                                // Find a subject that looks useful, or just take the first one
+                                const subject = json[0].session_subject || json[0].subject || "";
+                                if (subject && subject !== "null") {
+                                    el.innerText = subject;
+                                    el.style.display = "block";
+                                }
+                            }
+                        } catch (e) {
+                            console.warn("Failed to fetch session for " + id, e);
+                        } finally {
+                            el.dataset.loaded = "true";
+                        }
+                    }));
+                }
+            }
 
             // Render Cards
             const grid = document.getElementById("cardsGrid");
@@ -672,11 +711,11 @@
                 } else {
                     cards.forEach(card => {
                         const blockHtml = card.blockList.map(b => {
-                            
+
                             // Render Groups
                             const groupsHtml = b.groups.map(g => {
                                 const warn = (g.enrolled_count <= 10) ? ' <span class="text-danger fw-bold">!</span>' : '';
-                                
+
                                 let badgeClass = "bg-secondary";
                                 let progressClass = "bg-primary";
                                 if (g.campus === 'MEL') { badgeClass = "bg-msg-mel text-dark border-info"; progressClass = "bg-info"; }
@@ -688,13 +727,17 @@
                                 const isSynthetic = g.is_synthetic;
                                 const groupIdDisplay = isSynthetic ? '' : `<span class="text-muted small ms-2" style="font-size:0.7rem;">#${g.id}</span>`;
 
+                                // Placeholder for dynamic session label
+                                const sessionLabelId = `session-label-${g.id}`;
+                                const sessionLabel = isSynthetic ? '' : `<div id="${sessionLabelId}" class="small text-primary fw-bold mt-1 session-label" data-group-id="${g.id}" style="display:none;"></div>`;
+
                                 // Capacity Bar
                                 let progHtml = "";
                                 if (g.capacity > 0) {
                                     const pct = Math.min(100, Math.round((g.enrolled_count / g.capacity) * 100));
                                     let color = progressClass;
                                     if (pct > 95) color = "bg-danger";
-                                    
+
                                     progHtml = `
                                     <div class="d-flex align-items-center gap-2 mt-1" style="font-size:0.7rem;">
                                         <div class="progress flex-grow-1" style="height:4px;">
@@ -714,6 +757,7 @@
                                             ${groupIdDisplay}
                                         </div>
                                     </div>
+                                    ${sessionLabel}
                                     ${lecturer}
                                     ${progHtml}
                                 </div>`;
@@ -740,7 +784,7 @@
                         }
 
                         const div = document.createElement("div");
-                        div.className = "col-md-6 col-lg-4 mb-4 fade-in-up"; 
+                        div.className = "col-md-6 col-lg-4 mb-4 fade-in-up";
                         div.innerHTML = `
                     <div class="card h-100 shadow-sm border-0">
                         <div class="card-header bg-white border-bottom-0 pt-3 d-flex justify-content-between align-items-center">
