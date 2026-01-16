@@ -270,6 +270,36 @@
                         </div>
                     </div>
 
+                    <!-- Tab 2.5: At Risk Students (Encumbrance/SAR) -->
+                    <div class="tab-pane fade" id="pills-risk">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header bg-danger-subtle text-danger-emphasis fw-bold">
+                                ⚠ Encumbered & At-Risk Students
+                            </div>
+                            <div class="card-body">
+                                <p class="small text-muted mb-4">
+                                    Students flagged with <strong>Academic Risks (SAR, Probation)</strong> or
+                                    <strong>Encumbrances (Financial, Library)</strong>.
+                                </p>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle" id="atRiskTable">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Student</th>
+                                                <th>Course / Campus</th>
+                                                <th>Risk Category</th>
+                                                <th>Details</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Injected via JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Tab 3: Retention -->
                     <div class="tab-pane fade" id="pills-reten">
                         <div class="card shadow-sm border-0">
@@ -375,6 +405,7 @@
                 globalData = json;
                 render(json);
                 renderSuggestions(json);
+                renderAtRisk(json);
                 renderRetention(json);
 
                 if (json.groups) {
