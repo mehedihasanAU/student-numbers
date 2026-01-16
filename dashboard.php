@@ -479,16 +479,16 @@
         const API_URL = "scheduled_unit_counts.php";
         let globalData = null;
 
-        // Funny messages
+        // Funny messages (Academic Theme)
         const messages = [
-            "Herding students...", 
-            "Looking for missing pens...",
-            "Calculating coffee intake...",
-            "Asking the server nicely...", 
+            "Chasing lecturers for grades...",
+            "Finding empty classrooms...",
             "Deciphering handwriting...",
-            "Counting heads...",
-            "Checking visa dates...",
-            "Polishing the dashboard..."
+            "Counting coffee cups...",
+            "Checking library fines...",
+            "Formatting citations...",
+            "Submitting assignments late...",
+            "Waking up the server..."
         ];
 
         let msgIdx = 0;
@@ -532,9 +532,9 @@
             } finally {
                 const stillLoading = (globalData && globalData.groups && globalData.groups.some(g => g.source === 'pending'));
                 if (!stillLoading && loader) {
-                     clearInterval(msgInterval);
-                     loader.style.opacity = '0'; // Fade out
-                     setTimeout(() => loader.style.display = "none", 300);
+                    clearInterval(msgInterval);
+                    loader.style.opacity = '0'; // Fade out
+                    setTimeout(() => loader.style.display = "none", 300);
                 }
             }
         }
