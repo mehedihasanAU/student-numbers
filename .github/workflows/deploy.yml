@@ -19,11 +19,12 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          security: false
           # The remote directory to deploy to.
           # IMPORTANT: Verify this path matches your FTP user's root.
           # If your FTP user is locked to the /student-numbers/test folder, keep './'.
           # If it is at the server root, change to './httpdocs/student-numbers/test/' or similar.
+          protocol: ftp
+          port: 21
           server-dir: ./
           exclude: |
             **/.git*
