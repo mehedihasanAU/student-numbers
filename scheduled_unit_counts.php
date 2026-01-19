@@ -416,7 +416,35 @@ foreach ($unitList as $id => $payload) {
     // Robust Key Handling (API return casing varies)
     $p = array_change_key_case($payload, CASE_LOWER);
 
-    $unitCode = $p["scheduledunitcode"] ?? ($p["unitcode"] ?? ($p["scheduled_unit_code"] ?? ($p["unit_code"] ?? "Unknown")));
+    // Unit Code Healing:
+    // API is inconsistent. Sometimes eduOtherUnitId is the code (BACC2001), sometimes eduUnitId is (MBIS5019).
+    // Sometimes eduOtherUnitId is the Name.
+    // Strategy: Prefer values that look like Unit Codes (3-4 letters + 4 digits).
+
+    $candidates = [];
+    if (isset($p['eduotherunitid']))
+        $candidates[] = $p['eduotherunitid'];
+    if (isset($p['eduunitid']))
+        $candidates[] = $p['eduunitid'];
+    if (isset($p['scheduledunitcode']))
+        $candidates[] = $p['scheduledunitcode'];
+    if (isset($p['unitcode']))
+        $candidates[] = $p['unitcode'];
+
+    $finalUnitCode = "Unknown";
+    foreach ($candidates as $c) {
+        // Look for typical format: XXXX1234 or XXX1234
+        if (preg_match('/^[A-Z]{3,4}\d{4}[a-z]?$/i', $c)) {
+            $finalUnitCode = strtoupper($c);
+            break;
+        }
+    }
+    // Fallback if no regex match
+    if ($finalUnitCode === "Unknown" && !empty($candidates)) {
+        // Avoid "MATERIAL_FEE" acting as a code if possible, unless it's the only one
+        $finalUnitCode = $candidates[0];
+    }
+
     $campus = $p["campus"] ?? ($p["location"] ?? ($p["homeinstitutioncode"] ?? ($p["home_institution_code"] ?? "Unknown")));
     $startDate = $p["startdate"] ?? ($p["start_date"] ?? null);
     $endDate = $p["enddate"] ?? ($p["end_date"] ?? null);
@@ -429,7 +457,8 @@ foreach ($unitList as $id => $payload) {
     $groups[] = [
         "scheduled_unit_id" => intval($id),
         "enrolled_count_live" => $currentParticipants,
-        "unit_code" => $unitCode,
+        "unit_code" => $finalUnitCode, // Use healed code
+        "eduOtherUnitId" => $finalUnitCode, // Legacy dash needs this key specifically!
         "campus" => $campus,
         "block" => $block,
         "source" => "list_cache"
@@ -438,10 +467,11 @@ foreach ($unitList as $id => $payload) {
 
 echo json_encode([
     "generated_at" => gmdate("c"),
-    "unique_student_count" => $reportResult['unique_student_count'] ?? 0, // FIXED KEY
+    "unique_student_count" => $reportResult['unique_student_count'] ?? 0,
     "status_counts" => $reportResult['status_counts'] ?? [],
     "groups" => $groups,
     "detailed_groups" => $reportResult['detailed_groups'] ?? [],
+    "campus_breakdown_detail" => $reportResult['detailed_groups'] ?? [], // LEAGCY SUPPORT
     "risk_data" => $reportResult['student_risks'] ?? []
 ], JSON_UNESCAPED_SLASHES);
 
