@@ -33,21 +33,36 @@ curl_close($ch);
 
 if ($result) {
     echo "SUCCESS! Data received (" . strlen($result) . " bytes).\n\n";
-    $json = json_decode($result, true);
-    if (!is_array($json)) {
-        echo "ERROR: Could not decode JSON (Status: " . json_last_error_msg() . ")\n";
-        echo "First 100 chars: " . substr($result, 0, 100) . "\n";
-    } else {
-        echo "JSON Parsed OK. Found " . count($json) . " rows.\n";
-        if (count($json) > 0) {
-            echo "--- First Row Keys Analysis ---\n";
-            $firstRow = $json[0];
-            foreach ($firstRow as $k => $v) {
-                $kNorm = strtolower(str_replace(['_', ' '], '', $k));
-                echo "Key: '$k' -> Norm: '$kNorm' (Value: " . substr(json_encode($v), 0, 20) . ")\n";
+    // MEMORY OPTIMIZATION:
+    // The full JSON is 31MB -> 300MB RAM to decode. Server limit is 128MB.
+    // We only need the KEYS from the first row.
+    // So we grab the first 5000 chars and parse the first object manually.
+
+    $chunk = substr($result, 0, 5000);
+    $startPos = strpos($chunk, '{');
+    if ($startPos !== false) {
+        // Find the matching closing brace for the first object
+        // Simple search for "}," which usually ends the first object in a list array
+        $endPos = strpos($chunk, '},', $startPos);
+        if ($endPos !== false) {
+            $firstObjectJson = substr($chunk, $startPos, $endPos - $startPos + 1); // include }
+            $firstRow = json_decode($firstObjectJson, true);
+
+            if (is_array($firstRow)) {
+                echo "JSON Snippet Parsed OK. Analyzing First Row Keys:\n";
+                echo "------------------------------------------------\n";
+                foreach ($firstRow as $k => $v) {
+                    $kNorm = strtolower(str_replace(['_', ' '], '', $k));
+                    echo "Key: '$k' -> Norm: '$kNorm' (Value: " . substr(json_encode($v), 0, 20) . ")\n";
+                }
+                exit; // Done
             }
         }
     }
+
+    echo "ERROR: Could not parse first object from snippet.\n";
+    echo "First 500 chars:\n" . substr($chunk, 0, 500) . "\n";
+
 } else {
     echo "FAILED.\n";
     echo "HTTP Code: " . $info['http_code'] . "\n";
