@@ -8,7 +8,7 @@ error_reporting(E_ALL);
 header('Content-Type: text/plain');
 
 $config = require __DIR__ . '/config.php';
-$url = $config['report_url'] . "&limit=1"; // Fetch only 1 record for speed
+$url = $config['report_url'] . "&limit=1&report_format=JSON&report_from_url=1"; // Fetch only 1 record, ensure JSON
 
 echo "Target: $url\n\n";
 echo "Connecting...\n";

@@ -625,6 +625,15 @@ if (!$force && file_exists($reportCachePath) && (time() - filemtime($reportCache
 
 if ($reportResult === null) {
     $reportResult = fetchAndParseReport($reportUrl, $apiUser, $apiPw);
+
+    // SAFETY: Check for error response to prevent 500 crash
+    if (isset($reportResult['error'])) {
+        // Return the error directly to the frontend (JSON)
+        header('Content-Type: application/json');
+        echo json_encode($reportResult);
+        exit;
+    }
+
     if ($reportResult) {
         // PERMISSION SAFETY: Only write if we can
         if (!file_exists($CACHE_DIR)) {
