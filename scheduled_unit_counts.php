@@ -444,12 +444,16 @@ if ($reportResult === null) {
 
     $detailedGroups = $counts; // aliases
 
-    // Calculate Total Groups
+    // Calculate Total Groups and Total Enrollments
     $totalGroups = 0;
+    $totalEnrollments = 0;
     foreach ($detailedGroups as $u => $blocks) {
         foreach ($blocks as $b => $groups) {
             if (is_array($groups)) {
                 $totalGroups += count($groups);
+                foreach ($groups as $g) {
+                    $totalEnrollments += (isset($g['enrolled_count']) ? $g['enrolled_count'] : 0);
+                }
             }
         }
     }
@@ -463,6 +467,7 @@ if ($reportResult === null) {
         'detailed_groups' => $detailedGroups,
         'processed_rows' => $processedRows,
         'total_group_count' => $totalGroups,
+        'total_subject_enrollments' => $totalEnrollments,
         'retention_data' => array_map('array_keys', $retentionTemp)
     ];
 
@@ -552,7 +557,8 @@ echo json_encode([
     "campus_breakdown_detail" => $reportResult['detailed_groups'] ?? [], // LEAGCY SUPPORT
     "risk_data" => $reportResult['student_risks'] ?? [],
     "retention_data" => $reportResult['retention_data'] ?? [],
-    "total_group_count" => $reportResult['total_group_count'] ?? 0
+    "total_group_count" => $reportResult['total_group_count'] ?? 0,
+    "total_subject_enrollments" => $reportResult['total_subject_enrollments'] ?? 0
 ], JSON_UNESCAPED_SLASHES);
 
 

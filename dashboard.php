@@ -286,7 +286,8 @@
                 <div class="p-3 bg-white rounded-3 border shadow-sm d-flex align-items-center justify-content-between">
                     <div>
                         <div class="text-secondary small fw-bold text-uppercase tracking-wide"
-                            title="Total number of active class blocks being taught">Total Groups</div>
+                            title="Total number of active class blocks being taught">Total Groups(with at least 1
+                            student)</div>
                         <div class="display-6 fw-bold text-dark mt-1" id="kpiGroups">—</div>
                     </div>
                 </div>
@@ -652,17 +653,19 @@
             cards.sort((a, b) => b.unitTotal - a.unitTotal);
 
             // KPIs
-            const totalUnique = (data.unique_student_count || 0); // Corrected key from backend
-            const sCounts = data.status_counts || { Enrolled: 0, Other: 0 };
+            const totalUnique = (data.unique_student_count || 0);
+            const totalEnrolments = (data.total_subject_enrollments || 0);
             const kpiEl = document.getElementById("kpiUnique");
+
             if (kpiEl) {
+                // Logic Breakdown Display
                 kpiEl.innerHTML = `
-            <div class="d-flex align-items-baseline gap-2">
-                <span>${totalUnique.toLocaleString()}</span>
-                <span class="text-secondary fw-normal fs-6" style="font-size:0.8rem !important">
-                    (<span class="text-success fw-bold" title="Enrolled">${sCounts.Enrolled.toLocaleString()}</span> / 
-                     <span class="text-muted" title="Admitted/Confirmed">${sCounts.Other.toLocaleString()}</span>)
-                </span>
+            <div class="d-flex flex-column">
+                <div class="display-6 fw-bold text-primary">${totalUnique.toLocaleString()}</div>
+                <div class="small text-muted mt-1" style="font-size:0.75rem; line-height:1.2;">
+                    <strong>Headcount</strong> (Unique Students)<br>
+                    vs <strong>${totalEnrolments.toLocaleString()}</strong> Subject Enrollments
+                </div>
             </div>`;
             }
             // Trigger session label fetch for visible cards
