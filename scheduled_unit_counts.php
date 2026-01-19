@@ -314,13 +314,15 @@ function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$uni
                 'is_synthetic' => false,
                 'unit_code' => $unitCode
             ];
-            if ($studentId && $block && $block !== "Unknown Block") {
-                if (!isset($retentionTemp[$block]))
-                    $retentionTemp[$block] = [];
-                $retentionTemp[$block][$studentId] = true;
-            }
         }
         $counts[$unitCode][$block]['groups'][$groupKey]['enrolled_count']++;
+
+        // Track retention (Moved outside group init)
+        if ($studentId && $block && $block !== "Unknown Block") {
+            if (!isset($retentionTemp[$block]))
+                $retentionTemp[$block] = [];
+            $retentionTemp[$block][$studentId] = true;
+        }
     }
 }
 
