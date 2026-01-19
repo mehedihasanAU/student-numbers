@@ -1,4 +1,13 @@
 <?php
+// PROTECT API
+session_start();
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+    http_response_code(401);
+    header("Content-Type: application/json");
+    echo json_encode(['error' => 'Unauthorized']);
+    exit;
+}
+
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 error_reporting(E_ALL);
