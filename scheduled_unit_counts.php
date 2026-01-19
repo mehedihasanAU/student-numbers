@@ -156,7 +156,7 @@ function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$uni
         if ($kNorm === 'studentnumber' || $kNorm === 'studentid')
             $studentId = $v;
 
-        if (strpos($kNorm, 'coursename') !== false || $kNorm === 'course')
+        if ($kNorm === 'course_name' || $kNorm === 'coursename' || $kNorm === 'course')
             $courseName = $v;
 
         if ($kNorm === 'scheduledunitteacherfirstname')
