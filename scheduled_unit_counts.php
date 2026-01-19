@@ -198,8 +198,10 @@ function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$uni
     $unitCode = trim($unitCode);
 
     // Filter out Non-Tuition units (Material Fees etc)
-    if ($unitType && $unitType === 'OTHER_FEE')
+    if ($unitType && $unitType === 'OTHER_FEE') {
+        // file_put_contents('debug_log.txt', "REJECT: Other Fee $unitCode\n", FILE_APPEND);
         return;
+    }
 
     $isEnrolled = ($status && stripos($status, 'Enrolled') !== false);
 
@@ -226,6 +228,11 @@ function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$uni
     if ($blockRaw) {
         $block = preg_replace('/^\d{4}\s*-\s*/', '', trim($blockRaw));
         $block = trim($block, " -");
+    }
+
+    if (strpos($block, 'Summer') !== false) {
+        $msg = "ROW: $block | Enrolled: " . ($isEnrolled ? 'Y' : 'N') . " | ID: $studentId | UnitType: $unitType\n";
+        file_put_contents('debug_log.txt', $msg, FILE_APPEND);
     }
 
     if (!$campus)
