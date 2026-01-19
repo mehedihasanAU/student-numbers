@@ -291,7 +291,7 @@ function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$uni
 
 // -------------------- 2. FETCH LIST --------------------
 
-$listsCachePath = $CACHE_DIR . "/units_list_v1.json";
+$listsCachePath = $CACHE_DIR . "/units_list_v2.json"; // Bumped to v2
 $unitList = null;
 if (!$force && file_exists($listsCachePath) && (time() - filemtime($listsCachePath) < 3600)) {
     $unitList = json_decode(file_get_contents($listsCachePath), true);
@@ -307,8 +307,12 @@ if ($unitList === null) {
     foreach ($results as $date => $res) {
         if ($res['ok'] && is_array($res['data'])) {
             foreach ($res['data'] as $unit) {
-                if (isset($unit['eduScheduledUnitId']))
-                    $unitList[$unit['eduScheduledUnitId']] = $unit;
+                // Robust ID extraction
+                $p = array_change_key_case($unit, CASE_LOWER);
+                $id = $p['eduscheduledunitid'] ?? ($p['scheduledunitid'] ?? ($p['scheduled_unit_id'] ?? ($p['id'] ?? null)));
+
+                if ($id)
+                    $unitList[$id] = $unit;
             }
         }
     }
