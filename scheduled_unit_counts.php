@@ -446,6 +446,15 @@ foreach ($unitList as $id => $payload) {
     }
 
     $campus = $p["campus"] ?? ($p["location"] ?? ($p["homeinstitutioncode"] ?? ($p["home_institution_code"] ?? "Unknown")));
+
+    // Apply standard mapping
+    $cUpper = strtoupper(trim($campus));
+    if ($cUpper === 'AIHE')
+        $campus = 'SYD';
+    elseif ($cUpper === 'CAMPUS_MEL' || $cUpper === 'MEL')
+        $campus = 'MEL';
+    elseif ($cUpper === 'CAMPUS_COMB' || $cUpper === 'COMB')
+        $campus = 'COMB';
     $startDate = $p["startdate"] ?? ($p["start_date"] ?? null);
     $endDate = $p["enddate"] ?? ($p["end_date"] ?? null);
     $currentParticipants = isset($p["currentparticipants"]) ? intval($p["currentparticipants"]) : (isset($p["current_participants"]) ? intval($p["current_participants"]) : 0);
