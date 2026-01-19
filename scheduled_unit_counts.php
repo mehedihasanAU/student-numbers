@@ -30,7 +30,7 @@ $force = (isset($_GET['force']) && $_GET['force'] == "1");
 
 // -------------------- 1. STREAMING PARSER --------------------
 
-function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$unitMeta, &$uniqueStudents, &$uniqueRisks, &$studentRisks, &$retentionTemp)
+function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$unitMeta, &$uniqueStudents, &$uniqueRisks, &$studentRisks, &$retentionTemp, &$debugStats)
 {
 
     $ctx = stream_context_create([
@@ -93,7 +93,8 @@ function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$uni
                             $uniqueStudents,
                             $uniqueRisks,
                             $studentRisks,
-                            $retentionTemp
+                            $retentionTemp,
+                            $debugStats
                         );
                     }
                     $buffer = '';
@@ -106,10 +107,15 @@ function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$uni
     return $processedRows;
 }
 
-function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$unitMeta, &$uniqueStudents, &$uniqueRisks, &$studentRisks, &$retentionTemp)
+function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$unitMeta, &$uniqueStudents, &$uniqueRisks, &$studentRisks, &$retentionTemp, &$debugStats)
 {
     if (!is_array($row))
         return;
+
+    if ($processedRows === 0 && empty($debugStats['keys'])) {
+        $debugStats['keys'] = array_keys($row);
+    }
+
     $processedRows++;
 
     $unitCode = null;
@@ -377,6 +383,7 @@ if ($reportResult === null) {
     $uniqueRisks = [];
     $studentRisks = [];
     $retentionTemp = [];
+    $debugStats = ['keys' => []];
 
     $apiUrl = $reportUrl . "&report_format=JSON&report_from_url=1&limit=100000";
 
@@ -390,7 +397,8 @@ if ($reportResult === null) {
         $uniqueStudents,
         $uniqueRisks,
         $studentRisks,
-        $retentionTemp
+        $retentionTemp,
+        $debugStats
     );
 
     if (is_array($fetchResult) && isset($fetchResult['error'])) {
@@ -522,7 +530,8 @@ echo json_encode([
     "campus_breakdown_detail" => $reportResult['detailed_groups'] ?? [], // LEAGCY SUPPORT
     "risk_data" => $reportResult['student_risks'] ?? [],
     "retention_data" => $reportResult['retention_data'] ?? [],
-    "total_group_count" => $reportResult['total_group_count'] ?? 0
+    "total_group_count" => $reportResult['total_group_count'] ?? 0,
+    "debug_stats" => $debugStats ?? []
 ], JSON_UNESCAPED_SLASHES);
 
 
