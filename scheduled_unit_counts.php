@@ -265,6 +265,7 @@ function fetchAndParseReport($baseUrl, $user, $pw)
 
     // Increased timeout to 300s to handle slow report generation (30s+) + large download (31MB)
     curl_setopt($ch, CURLOPT_TIMEOUT, 300);
+    curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4); // Force IPv4 (Critical for Paradigm connection)
 
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         "User-Agent: Enrolment-Insights-Backend/1.0",
@@ -292,6 +293,9 @@ function fetchAndParseReport($baseUrl, $user, $pw)
 
     $counts = [];
     $detailedCounts = [];
+    $uniqueStudentIds = []; // Global unique students
+    $uniqueUnitStudentPairs = []; // Student+Unit status
+    $processedRows = 0;
     $unitMeta = [];
     $uniqueStudents = [];
     $statusCounts = ['Enrolled' => 0, 'Other' => 0];
@@ -304,6 +308,7 @@ function fetchAndParseReport($baseUrl, $user, $pw)
     $uniqueRisks = [];
 
     foreach ($rows as $row) {
+        $processedRows++;
         $unitCode = null;
         $campus = null;
         $status = null;
@@ -499,11 +504,6 @@ function fetchAndParseReport($baseUrl, $user, $pw)
             }
         }
 
-        // Aggregations (Enrolled Only)
-        if ($isEnrolled) {
-            if (!isset($counts[$unitCode]))
-                $counts[$unitCode] = [];
-            if (!isset($counts[$unitCode][$campus]))
                 $counts[$unitCode][$campus] = 0;
             $counts[$unitCode][$campus]++;
 
