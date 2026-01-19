@@ -18,25 +18,21 @@ $CONNECT_TIMEOUT = $config['connect_timeout'];
 $TIMEOUT = $config['timeout'];
 $CONCURRENCY = $config['concurrency'];
 
-// Safety wrapper for restricted environments (though ignored by some hosts)
 @ini_set('memory_limit', '1024M');
 @set_time_limit(300);
 
-
-// Caching (disk)
 $CACHE_DIR = __DIR__ . "/.cache_paradigm";
-$CACHE_TTL_SECONDS = 300; // 5 minutes
+$CACHE_TTL_SECONDS = 300;
 
 ensureCacheDir($CACHE_DIR);
 
 $force = (isset($_GET['force']) && $_GET['force'] == "1");
 
-// -------------------- 1. STREAMING PARSER (Fixes 128MB Limit) --------------------
+// -------------------- 1. STREAMING PARSER --------------------
 
 function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$unitMeta, &$uniqueStudents, &$uniqueRisks, &$studentRisks)
 {
 
-    // 1. Open Stream
     $ctx = stream_context_create([
         'http' => [
             'method' => 'GET',
@@ -53,18 +49,13 @@ function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$uni
         return ['error' => 'Could not open stream: ' . ($err['message'] ?? 'Unknown error')];
     }
 
-    // 2. Stream Buffer Logic
     $buffer = '';
     $depth = 0;
     $inString = false;
     $processedRows = 0;
 
-    // We are looking for objects "{ ... }" inside the main array "[ ... ]"
-    // Limitations: This simple parser assumes the JSON structure is an array of objects.
-    // robust enough for Paradigm output.
-
     while (!feof($fp)) {
-        $chunk = fread($fp, 8192); // 8KB chunks
+        $chunk = fread($fp, 8192);
         if ($chunk === false)
             break;
 
@@ -72,7 +63,6 @@ function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$uni
         for ($i = 0; $i < $len; $i++) {
             $char = $chunk[$i];
 
-            // Toggle String State (to ignore braces inside strings)
             if ($char === '"' && ($i === 0 || $chunk[$i - 1] !== '\\')) {
                 $inString = !$inString;
             }
@@ -80,7 +70,7 @@ function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$uni
             if (!$inString) {
                 if ($char === '{') {
                     if ($depth === 0)
-                        $buffer = ''; // Start capturing new object
+                        $buffer = '';
                     $depth++;
                 }
             }
@@ -92,7 +82,6 @@ function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$uni
             if (!$inString && $char === '}') {
                 $depth--;
                 if ($depth === 0) {
-                    // End of an object at root level
                     $row = json_decode($buffer, true);
                     if (is_array($row)) {
                         processSingleRow(
@@ -106,7 +95,7 @@ function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$uni
                             $studentRisks
                         );
                     }
-                    $buffer = ''; // Clear buffer
+                    $buffer = '';
                 }
             }
         }
@@ -161,8 +150,11 @@ function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$uni
             $startDateRaw = $v;
         if (strpos($kNorm, 'termperiod') !== false)
             $blockRaw = $v;
+
+        // ID Extraction fix: Ensure we capture it if it's there
         if ($kNorm === 'studentnumber' || $kNorm === 'studentid')
             $studentId = $v;
+
         if (strpos($kNorm, 'coursename') !== false || $kNorm === 'course')
             $courseName = $v;
 
@@ -233,10 +225,13 @@ function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$uni
     $campusUpper = strtoupper(trim($campus));
     if ($campusUpper === 'AIHE')
         $campus = 'SYD';
-    elseif ($campusUpper === 'CAMPUS_MEL' || $campusUpper === 'MEL')
+    elseif ($campusUpper === 'CAMPUS_MEL' || $campusUpper === 'MEL') {
         $campus = 'MEL';
-    elseif ($campusUpper === 'CAMPUS_COMB' || $campusUpper === 'COMB')
+    } elseif ($campusUpper === 'CAMPUS_COMB' || $campusUpper === 'COMB') {
         $campus = 'COMB';
+    } else {
+        // Normalize 'Sydney' to 'SYD' etc if needed, but sticking to basics
+    }
 
     if ($isEnrolled) {
         // Risks
@@ -272,60 +267,48 @@ function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$uni
         if (!isset($counts[$unitCode]))
             $counts[$unitCode] = [];
         if (!isset($counts[$unitCode][$block])) {
-            $counts[$unitCode][$block] = ['count' => 0, 'students' => [], 'campus_breakdown' => [], 'lecturers' => []];
+            $counts[$unitCode][$block] = ['groups' => []];
         }
-
-        $counts[$unitCode][$block]['count']++;
-
-        if (!isset($counts[$unitCode][$block]['campus_breakdown'][$campus])) {
-            $counts[$unitCode][$block]['campus_breakdown'][$campus] = 0;
-        }
-        $counts[$unitCode][$block]['campus_breakdown'][$campus]++;
 
         $lecturerName = trim("$lecturerFirst $lecturerLast");
         if ($teacherFree)
             $lecturerName = $teacherFree;
         elseif ($supFirst || $supLast)
             $lecturerName = trim("$supFirst $supLast");
-
         if (!$lecturerName)
             $lecturerName = "TBA";
-        if (!isset($counts[$unitCode][$block]['lecturers'][$lecturerName])) {
-            $counts[$unitCode][$block]['lecturers'][$lecturerName] = 0;
+
+        // Key by Campus|Lecturer to preserve distinct groups
+        $groupKey = "$campus|$lecturerName";
+
+        if (!isset($counts[$unitCode][$block]['groups'][$groupKey])) {
+            $counts[$unitCode][$block]['groups'][$groupKey] = 0;
         }
-        $counts[$unitCode][$block]['lecturers'][$lecturerName]++;
+        $counts[$unitCode][$block]['groups'][$groupKey]++;
     }
 }
 
 
-// -------------------- 2. FETCH SCHEDULED UNITS (List) --------------------
+// -------------------- 2. FETCH LIST --------------------
 
 $listsCachePath = $CACHE_DIR . "/units_list_v1.json";
-$listsCacheTtl = 3600;
-
 $unitList = null;
-if (!$force && file_exists($listsCachePath) && (time() - filemtime($listsCachePath) < $listsCacheTtl)) {
+if (!$force && file_exists($listsCachePath) && (time() - filemtime($listsCachePath) < 3600)) {
     $unitList = json_decode(file_get_contents($listsCachePath), true);
 }
 
 if ($unitList === null) {
-    // Need curlMultiFetchJson helper
     $urls = [];
     foreach ($blockDates as $date) {
         $urls[$date] = "{$paradigmHost}/api/rest/ScheduledUnit?startDate={$date}";
     }
-
-    // Inline simpler multi fetch to save context switches
-    // Or call helper defined below
     $results = curlMultiFetchJson($urls, $apiUser, $apiPw, $CONNECT_TIMEOUT, $TIMEOUT, $CONCURRENCY);
-
     $unitList = [];
     foreach ($results as $date => $res) {
         if ($res['ok'] && is_array($res['data'])) {
             foreach ($res['data'] as $unit) {
-                $id = $unit['eduScheduledUnitId'] ?? null;
-                if ($id)
-                    $unitList[$id] = $unit;
+                if (isset($unit['eduScheduledUnitId']))
+                    $unitList[$unit['eduScheduledUnitId']] = $unit;
             }
         }
     }
@@ -333,21 +316,19 @@ if ($unitList === null) {
 }
 
 
-// -------------------- 3. MAIN EXECUTION (Report) --------------------
+// -------------------- 3. MAIN REPORT EXECUTION --------------------
 
-$reportCachePath = $CACHE_DIR . "/report_11472_v7_stream.json"; // New cache file for stream
+$reportCachePath = $CACHE_DIR . "/report_11472_v8_stream.json";
 $reportResult = null;
 
 if (!$force && file_exists($reportCachePath) && (time() - filemtime($reportCachePath) < $CACHE_TTL_SECONDS)) {
     $decoded = json_decode(file_get_contents($reportCachePath), true);
-    // Self-healing: Ensure it has data
     if ((isset($decoded['unique_student_count']) && $decoded['unique_student_count'] > 0) || isset($decoded['counts'])) {
         $reportResult = $decoded;
     }
 }
 
 if ($reportResult === null) {
-    // PREPARE REFERENCE VARIABLES
     $counts = [];
     $statusCounts = ['Enrolled' => 0, 'Other' => 0];
     $unitMeta = [];
@@ -357,7 +338,6 @@ if ($reportResult === null) {
 
     $apiUrl = $reportUrl . "&report_format=JSON&report_from_url=1&limit=100000";
 
-    // STREAM EXECUTION
     $fetchResult = processStreamAndCount(
         $apiUrl,
         $apiUser,
@@ -378,21 +358,22 @@ if ($reportResult === null) {
 
     $processedRows = $fetchResult;
 
-    // Map internal structure to output structure
+    // FORMAT GROUPS FOR FRONTEND
     $detailedGroups = [];
     foreach ($counts as $u => $blocks) {
         foreach ($blocks as $b => $data) {
-            foreach ($data['lecturers'] as $lecName => $lecCount) {
-                // Synthetic group for lecturer
-                // This is an approximation since we don't track group IDs perfectly in stream yet
-                // But it's better than nothing
+            foreach ($data['groups'] as $key => $count) {
+                // Key is "Campus|Lecturer"
+                list($camp, $lec) = explode('|', $key, 2);
+
                 $grp = [
                     'unit_code' => $u,
                     'block' => $b,
-                    'lecturer' => $lecName,
-                    'enrolled_count' => $lecCount,
-                    'campus_breakdown' => $data['campus_breakdown']
+                    'campus' => $camp,     // FIX: Explicitly set campus
+                    'lecturer' => $lec,    // FIX: Explicitly set lecturer
+                    'enrolled_count' => $count,
                 ];
+
                 if (!isset($detailedGroups[$u]))
                     $detailedGroups[$u] = [];
                 if (!isset($detailedGroups[$u][$b]))
@@ -418,21 +399,16 @@ if ($reportResult === null) {
 }
 
 
-// -------------------- 4. FINAL MERGE & OUTPUT --------------------
+// -------------------- 4. OUTPUT --------------------
 
 $reportCounts = $reportResult['counts'] ?? [];
-$reportMeta = $reportResult['meta'] ?? [];
-$reportDetailed = $reportResult['detailed_groups'] ?? [];
-
 $groups = [];
 
+// Fallback logic for groups list (KPIs)
 foreach ($unitList as $id => $payload) {
     if (!$id)
         continue;
-
-    $eduUnitId = $payload["eduUnitId"] ?? null;
-    $eduOtherUnitId = $payload["eduOtherUnitId"] ?? null;
-    $unitCode = $payload["scheduledUnitCode"] ?? ($payload["unitCode"] ?? "Unknown"); // Use list's code
+    $unitCode = $payload["scheduledUnitCode"] ?? ($payload["unitCode"] ?? "Unknown");
     $campus = $payload["campus"] ?? ($payload["location"] ?? "Unknown");
     $startDate = $payload["startDate"] ?? null;
     $endDate = $payload["endDate"] ?? null;
@@ -440,26 +416,15 @@ foreach ($unitList as $id => $payload) {
 
     $startYmd = paradigmTsToYmd($startDate);
     $endYmd = paradigmTsToYmd($endDate);
-
-    // Find matching report data
-    $breakdown = [];
     $block = getBlockLabelFromStartEnd($startYmd, $endYmd);
-
-    // Report is keyed by UnitCode -> Block
-    if ($unitCode && isset($reportCounts[$unitCode]) && isset($reportCounts[$unitCode][$block])) {
-        $breakdown = $reportCounts[$unitCode][$block]['campus_breakdown'] ?? [];
-    }
 
     $groups[] = [
         "scheduled_unit_id" => intval($id),
         "enrolled_count_live" => $currentParticipants,
-        "unit_code" => $unitCode, // Pass unit code for frontend
-        "eduUnitId" => $eduUnitId,
+        "unit_code" => $unitCode,
         "campus" => $campus,
-        "startDate" => $startDate,
         "block" => $block,
-        "source" => "list_cache",
-        "campus_breakdown" => $breakdown
+        "source" => "list_cache"
     ];
 }
 
@@ -468,7 +433,7 @@ echo json_encode([
     "unique_students" => $reportResult['unique_student_count'] ?? 0,
     "status_counts" => $reportResult['status_counts'] ?? [],
     "groups" => $groups,
-    "detailed_groups" => $reportDetailed, // Detailed breakdown for popups
+    "detailed_groups" => $reportResult['detailed_groups'] ?? [],
     "risk_data" => $reportResult['student_risks'] ?? []
 ], JSON_UNESCAPED_SLASHES);
 
@@ -526,7 +491,7 @@ function curlMultiFetchJson($urls, $apiUser, $apiPw, $connectTimeout, $timeout, 
             CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
             CURLOPT_USERPWD => $apiUser . ":" . $apiPw,
             CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4 // IPv4 Safety
+            CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4
         ]);
         $handles[(int) $ch] = ["id" => $id];
         curl_multi_add_handle($mh, $ch);
