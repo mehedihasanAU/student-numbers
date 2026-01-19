@@ -30,7 +30,7 @@ $force = (isset($_GET['force']) && $_GET['force'] == "1");
 
 // -------------------- 1. STREAMING PARSER --------------------
 
-function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$unitMeta, &$uniqueStudents, &$uniqueRisks, &$studentRisks, &$retentionTemp, &$debugStats)
+function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$unitMeta, &$uniqueStudents, &$uniqueRisks, &$studentRisks, &$retentionTemp)
 {
 
     $ctx = stream_context_create([
@@ -93,8 +93,7 @@ function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$uni
                             $uniqueStudents,
                             $uniqueRisks,
                             $studentRisks,
-                            $retentionTemp,
-                            $debugStats
+                            $retentionTemp
                         );
                     }
                     $buffer = '';
@@ -107,7 +106,7 @@ function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$uni
     return $processedRows;
 }
 
-function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$unitMeta, &$uniqueStudents, &$uniqueRisks, &$studentRisks, &$retentionTemp, &$debugStats)
+function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$unitMeta, &$uniqueStudents, &$uniqueRisks, &$studentRisks, &$retentionTemp)
 {
     if (!is_array($row))
         return;
@@ -378,7 +377,6 @@ if ($reportResult === null) {
     $uniqueRisks = [];
     $studentRisks = [];
     $retentionTemp = [];
-    $debugStats = ['summer_rows' => 0, 'rows_processed' => 0, 'sample_summer' => []];
 
     $apiUrl = $reportUrl . "&report_format=JSON&report_from_url=1&limit=100000";
 
@@ -392,8 +390,7 @@ if ($reportResult === null) {
         $uniqueStudents,
         $uniqueRisks,
         $studentRisks,
-        $retentionTemp,
-        $debugStats
+        $retentionTemp
     );
 
     if (is_array($fetchResult) && isset($fetchResult['error'])) {
@@ -513,8 +510,7 @@ echo json_encode([
     "detailed_groups" => $reportResult['detailed_groups'] ?? [],
     "campus_breakdown_detail" => $reportResult['detailed_groups'] ?? [], // LEAGCY SUPPORT
     "risk_data" => $reportResult['student_risks'] ?? [],
-    "retention_data" => $reportResult['retention_data'] ?? [],
-    "debug_stats" => $debugStats ?? []
+    "retention_data" => $reportResult['retention_data'] ?? []
 ], JSON_UNESCAPED_SLASHES);
 
 
