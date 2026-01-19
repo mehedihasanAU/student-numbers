@@ -5,6 +5,7 @@
 
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
+ini_set('memory_limit', '512M'); // Bump memory for large JSON decode
 header('Content-Type: text/plain');
 
 $config = require __DIR__ . '/config.php';
