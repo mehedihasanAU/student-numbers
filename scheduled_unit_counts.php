@@ -119,6 +119,7 @@ function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$uni
     $blockRaw = null;
     $studentId = null;
     $courseName = null;
+    $unitType = null;
 
     $lecturerFirst = null;
     $lecturerLast = null;
@@ -139,6 +140,8 @@ function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$uni
 
         if ($kNorm === 'scheduledunitcode' || $kNorm === 'unitcode')
             $unitCode = $v;
+        if ($kNorm === 'unittype')
+            $unitType = $v;
         if ($kNorm === 'homeinstitutioncode' || $kNorm === 'homeinstitute') {
             $campus = $v;
         }
@@ -193,6 +196,10 @@ function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$uni
     if (!$unitCode)
         return;
     $unitCode = trim($unitCode);
+
+    // Filter out Non-Tuition units (Material Fees etc)
+    if ($unitType && $unitType === 'OTHER_FEE')
+        return;
 
     $isEnrolled = ($status && stripos($status, 'Enrolled') !== false);
 
