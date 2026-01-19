@@ -30,7 +30,7 @@ $force = (isset($_GET['force']) && $_GET['force'] == "1");
 
 // -------------------- 1. STREAMING PARSER --------------------
 
-function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$unitMeta, &$uniqueStudents, &$uniqueRisks, &$studentRisks, &$retentionTemp)
+function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$unitMeta, &$uniqueStudents, &$uniqueRisks, &$studentRisks, &$retentionTemp, &$debugStats)
 {
 
     $ctx = stream_context_create([
@@ -93,7 +93,8 @@ function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$uni
                             $uniqueStudents,
                             $uniqueRisks,
                             $studentRisks,
-                            $retentionTemp
+                            $retentionTemp,
+                            $debugStats
                         );
                     }
                     $buffer = '';
@@ -106,7 +107,7 @@ function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$uni
     return $processedRows;
 }
 
-function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$unitMeta, &$uniqueStudents, &$uniqueRisks, &$studentRisks, &$retentionTemp)
+function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$unitMeta, &$uniqueStudents, &$uniqueRisks, &$studentRisks, &$retentionTemp, &$debugStats)
 {
     if (!is_array($row))
         return;
@@ -231,13 +232,14 @@ function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$uni
     }
 
     if ($processedRows < 5) {
-        $msg = "DEBUG ROW $processedRows: Block='$block' | Status='$status' | UnitType='$unitType' | ID='$studentId'\n";
-        file_put_contents('debug_log.txt', $msg, FILE_APPEND);
+        $debugStats['rows'][] = "Block='$block' | Status='$status' | UnitType='$unitType'";
     }
 
     if (strpos($block, 'Summer') !== false) {
-        $msg = "SUMMER ROW: $block | Enrolled: " . ($isEnrolled ? 'Y' : 'N') . " | ID: $studentId | UnitType: $unitType\n";
-        file_put_contents('debug_log.txt', $msg, FILE_APPEND);
+        $debugStats['summer_rows']++;
+        if ($processedRows < 20) { // Limit log size
+            $debugStats['summer_examples'][] = "Enrolled: " . ($isEnrolled ? 'Y' : 'N') . " | UnitType: $unitType";
+        }
     }
 
     if (!$campus)
@@ -374,6 +376,7 @@ if ($reportResult === null) {
     $uniqueRisks = [];
     $studentRisks = [];
     $retentionTemp = [];
+    $debugStats = ['summer_rows' => 0, 'rows_processed' => 0, 'sample_summer' => []];
 
     $apiUrl = $reportUrl . "&report_format=JSON&report_from_url=1&limit=100000";
 
@@ -387,7 +390,8 @@ if ($reportResult === null) {
         $uniqueStudents,
         $uniqueRisks,
         $studentRisks,
-        $retentionTemp
+        $retentionTemp,
+        $debugStats
     );
 
     if (is_array($fetchResult) && isset($fetchResult['error'])) {
@@ -507,7 +511,8 @@ echo json_encode([
     "detailed_groups" => $reportResult['detailed_groups'] ?? [],
     "campus_breakdown_detail" => $reportResult['detailed_groups'] ?? [], // LEAGCY SUPPORT
     "risk_data" => $reportResult['student_risks'] ?? [],
-    "retention_data" => $reportResult['retention_data'] ?? []
+    "retention_data" => $reportResult['retention_data'] ?? [],
+    "debug_stats" => $debugStats ?? []
 ], JSON_UNESCAPED_SLASHES);
 
 
