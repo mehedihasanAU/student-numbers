@@ -53,7 +53,17 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
     <body>
         <div class="login-card text-center">
-            <h4 class="mb-4">🔒 Protected Access</h4>
+            <div class="mb-4 d-flex justify-content-center">
+                <a class="d-flex align-items-center gap-2 text-decoration-none text-dark" href="#">
+                    <img src="https://as.aih.edu.au/logo-green.svg" alt="AIHE Logo" style="height: 50px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        class="text-success">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                    </svg>
+                    <span class="fs-4 fw-semibold tracking-tight">Enrolment Insights</span>
+                </a>
+            </div>
+
             <?php if (isset($error)): ?>
                 <div class="alert alert-danger py-2 small">
                     <?php echo htmlspecialchars($error); ?>
@@ -64,9 +74,9 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
                     <input type="password" name="password" class="form-control" placeholder="Enter Admin Password" required
                         autofocus>
                 </div>
-                <button type="submit" class="btn btn-primary w-100">Login</button>
+                <button type="submit" class="btn btn-success w-100 fw-medium">Access Dashboard</button>
             </form>
-            <div class="mt-3 text-muted small">AIHE Enrolment Insights</div>
+            <div class="mt-4 text-muted small opacity-75">Protected Area</div>
         </div>
     </body>
 
