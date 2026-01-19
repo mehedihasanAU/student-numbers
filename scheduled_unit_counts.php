@@ -302,10 +302,6 @@ function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$uni
         // Aggregate
         if (!isset($counts[$unitCode]))
             $counts[$unitCode] = [];
-        if (!isset($counts[$unitCode][$block])) {
-            $counts[$unitCode][$block] = ['groups' => []];
-        }
-
         $lecturerName = trim("$lecturerFirst $lecturerLast");
         if ($teacherFree)
             $lecturerName = $teacherFree;
@@ -314,27 +310,48 @@ function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$uni
         if (!$lecturerName)
             $lecturerName = "TBA";
 
-        // Key by Campus|Lecturer to preserve distinct groups
-        $groupKey = "$campus|$lecturerName";
+        if ($unitCode && $block) {
+            if (!isset($counts[$unitCode]))
+                $counts[$unitCode] = [];
+            if (!isset($counts[$unitCode][$block]))
+                $counts[$unitCode][$block] = [
+                    'groups' => [],
+                    'total' => 0
+                ];
 
-        if (!isset($counts[$unitCode][$block]['groups'][$groupKey])) {
-            $counts[$unitCode][$block]['groups'][$groupKey] = [
-                'id' => $scheduledUnitId ?: 0, // Best effort ID
-                'campus' => $campus,
-                'lecturer' => $lecturerName,
-                'enrolled_count' => 0,
-                'capacity' => $maxParticipants,
-                'is_synthetic' => false,
-                'unit_code' => $unitCode
-            ];
-        }
-        $counts[$unitCode][$block]['groups'][$groupKey]['enrolled_count']++;
+            $counts[$unitCode][$block]['total']++;
 
-        // Track retention (Moved outside group init)
-        if ($studentId && $block && $block !== "Unknown Block") {
-            if (!isset($retentionTemp[$block]))
-                $retentionTemp[$block] = [];
-            $retentionTemp[$block][$studentId] = true;
+            // Use Unique Group ID if available, else fallback to fuzzy key
+            if ($unitGroupId) {
+                // Precise: Group ID
+                $groupKey = "gid_" . $unitGroupId;
+            } elseif ($classNo) {
+                // Precise: Class No (scoped to Unit)
+                $groupKey = "cls_" . $scheduledUnitId . "_" . $classNo;
+            } else {
+                // Fallback: Fuzzy
+                $groupKey = "fuzzy_" . $campus . "|" . $lecturerName;
+            }
+
+            if (!isset($counts[$unitCode][$block]['groups'][$groupKey])) {
+                $counts[$unitCode][$block]['groups'][$groupKey] = [
+                    'id' => $unitGroupId ?: ($scheduledUnitId ?: 0),
+                    'campus' => $campus,
+                    'lecturer' => $lecturerName,
+                    'enrolled_count' => 0,
+                    'capacity' => $maxParticipants,
+                    'is_synthetic' => false,
+                    'unit_code' => $unitCode
+                ];
+            }
+            $counts[$unitCode][$block]['groups'][$groupKey]['enrolled_count']++;
+
+            // Track retention (Moved outside group init)
+            if ($studentId && $block && $block !== "Unknown Block") {
+                if (!isset($retentionTemp[$block]))
+                    $retentionTemp[$block] = [];
+                $retentionTemp[$block][$studentId] = true;
+            }
         }
     }
 }
