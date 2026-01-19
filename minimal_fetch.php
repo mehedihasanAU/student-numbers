@@ -19,7 +19,7 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_USERPWD, $config['api_user'] . ":" . $config['api_pw']);
 curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-curl_setopt($ch, CURLOPT_TIMEOUT, 15); // 15s timeout
+curl_setopt($ch, CURLOPT_TIMEOUT, 60); // Increased timeout to 60s
 curl_setopt($ch, CURLOPT_VERBOSE, true); // Show debug info if possible on output
 
 // Force IPv4 just in case

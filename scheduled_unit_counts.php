@@ -260,10 +260,11 @@ function fetchAndParseReport($baseUrl, $user, $pw)
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_USERPWD, "$user:$pw");
     curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+
+    // Increased timeout to 300s to handle slow report generation (30s+) + large download (31MB)
+    curl_setopt($ch, CURLOPT_TIMEOUT, 300);
 
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         "User-Agent: Enrolment-Insights-Backend/1.0",
