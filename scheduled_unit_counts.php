@@ -371,10 +371,11 @@ if ($reportResult === null) {
     $processedRows = $fetchResult;
 
     // FIX: Convert 'groups' from associative array (Campus|Lecturer) to indexed array for frontend
+    // AND Unwrap it so detailedGroups[u][b] = [group1, group2...] 
     foreach ($counts as $u => &$blocks) {
         foreach ($blocks as $b => &$bData) {
             if (isset($bData['groups']) && is_array($bData['groups'])) {
-                $bData['groups'] = array_values($bData['groups']);
+                $bData = array_values($bData['groups']);
             }
         }
     }
