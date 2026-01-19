@@ -279,8 +279,16 @@ function fetchAndParseReport($baseUrl, $user, $pw)
         return [];
 
     $rows = json_decode($jsonData, true);
-    if (!is_array($rows))
-        return [];
+    if (!is_array($rows)) {
+        // DEBUG: If not JSON, return error to help diagnosis
+        // This will be wrapped in the final JSON output
+        return [
+            'error' => 'JSON Decode Failed',
+            'http_code' => $httpCode,
+            'preview' => substr($jsonData, 0, 1000)
+        ];
+    }
+
 
     $counts = [];
     $detailedCounts = [];
