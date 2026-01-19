@@ -412,11 +412,11 @@ foreach ($unitList as $id => $payload) {
     // Robust Key Handling (API return casing varies)
     $p = array_change_key_case($payload, CASE_LOWER);
 
-    $unitCode = $p["scheduledunitcode"] ?? ($p["unitcode"] ?? "Unknown");
-    $campus = $p["campus"] ?? ($p["location"] ?? ($p["homeinstitutioncode"] ?? "Unknown"));
-    $startDate = $p["startdate"] ?? null;
-    $endDate = $p["enddate"] ?? null;
-    $currentParticipants = isset($p["currentparticipants"]) ? intval($p["currentparticipants"]) : 0;
+    $unitCode = $p["scheduledunitcode"] ?? ($p["unitcode"] ?? ($p["scheduled_unit_code"] ?? ($p["unit_code"] ?? "Unknown")));
+    $campus = $p["campus"] ?? ($p["location"] ?? ($p["homeinstitutioncode"] ?? ($p["home_institution_code"] ?? "Unknown")));
+    $startDate = $p["startdate"] ?? ($p["start_date"] ?? null);
+    $endDate = $p["enddate"] ?? ($p["end_date"] ?? null);
+    $currentParticipants = isset($p["currentparticipants"]) ? intval($p["currentparticipants"]) : (isset($p["current_participants"]) ? intval($p["current_participants"]) : 0);
 
     $startYmd = paradigmTsToYmd($startDate);
     $endYmd = paradigmTsToYmd($endDate);
