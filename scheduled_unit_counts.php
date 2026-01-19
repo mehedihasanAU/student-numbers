@@ -230,8 +230,13 @@ function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$uni
         $block = trim($block, " -");
     }
 
+    if ($processedRows < 5) {
+        $msg = "DEBUG ROW $processedRows: Block='$block' | Status='$status' | UnitType='$unitType' | ID='$studentId'\n";
+        file_put_contents('debug_log.txt', $msg, FILE_APPEND);
+    }
+
     if (strpos($block, 'Summer') !== false) {
-        $msg = "ROW: $block | Enrolled: " . ($isEnrolled ? 'Y' : 'N') . " | ID: $studentId | UnitType: $unitType\n";
+        $msg = "SUMMER ROW: $block | Enrolled: " . ($isEnrolled ? 'Y' : 'N') . " | ID: $studentId | UnitType: $unitType\n";
         file_put_contents('debug_log.txt', $msg, FILE_APPEND);
     }
 
