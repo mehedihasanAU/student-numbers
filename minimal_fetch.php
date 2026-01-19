@@ -32,8 +32,21 @@ curl_close($ch);
 
 if ($result) {
     echo "SUCCESS! Data received (" . strlen($result) . " bytes).\n\n";
-    echo "Preview:\n";
-    echo substr($result, 0, 500) . "...\n";
+    $json = json_decode($result, true);
+    if (!is_array($json)) {
+        echo "ERROR: Could not decode JSON (Status: " . json_last_error_msg() . ")\n";
+        echo "First 100 chars: " . substr($result, 0, 100) . "\n";
+    } else {
+        echo "JSON Parsed OK. Found " . count($json) . " rows.\n";
+        if (count($json) > 0) {
+            echo "--- First Row Keys Analysis ---\n";
+            $firstRow = $json[0];
+            foreach ($firstRow as $k => $v) {
+                $kNorm = strtolower(str_replace(['_', ' '], '', $k));
+                echo "Key: '$k' -> Norm: '$kNorm' (Value: " . substr(json_encode($v), 0, 20) . ")\n";
+            }
+        }
+    }
 } else {
     echo "FAILED.\n";
     echo "HTTP Code: " . $info['http_code'] . "\n";
