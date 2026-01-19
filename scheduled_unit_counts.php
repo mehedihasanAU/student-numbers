@@ -605,8 +605,12 @@ $reportResult = null;
 
 if (!$force && file_exists($reportCachePath) && (time() - filemtime($reportCachePath) < $reportCacheTtl)) {
     $decoded = json_decode(file_get_contents($reportCachePath), true);
-    // STALE CACHE CHECK: If detailed_groups is missing (new feature), force refresh
-    if (isset($decoded['detailed_groups'])) {
+    // STALE CACHE CHECK: 
+    // 1. If detailed_groups is missing (new feature), force refresh
+    // 2. SELF-HEALING: If cache has 0 students (likely from a failed/blocked run), ignore it!
+    $cachedStudentCount = $decoded['unique_student_count'] ?? 0;
+
+    if (isset($decoded['detailed_groups']) && $cachedStudentCount > 0) {
         $reportResult = $decoded;
     }
 }
