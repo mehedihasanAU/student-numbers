@@ -246,9 +246,10 @@
             <div class="ms-auto d-flex gap-3">
                 <input type="text" id="searchInput" class="form-control search-input"
                     placeholder="Search units or blocks..." style="width: 280px;">
-                 <button class="btn btn-outline-success rounded-pill px-3 fw-medium text-nowrap" id="btnLoadLabels" onclick="fetchSessionLabels()">
+                <button class="btn btn-outline-success rounded-pill px-3 fw-medium text-nowrap" id="btnLoadLabels"
+                    onclick="fetchSessionLabels()">
                     <i class="bi bi-tags-fill me-1"></i> Load Names
-                 </button>
+                </button>
                 <button id="btnRefresh" class="btn btn-dark rounded-pill px-4 fw-medium">Refresh</button>
             </div>
         </div>
@@ -669,7 +670,8 @@
             // fetchSessionLabels();
 
             if (document.getElementById("kpiUnits")) document.getElementById("kpiUnits").innerText = unitCount.toLocaleString();
-            
+            if (document.getElementById("kpiGroups")) document.getElementById("kpiGroups").innerText = (data.total_group_count || 0).toLocaleString();
+
             async function fetchSessionLabels() {
                 const btn = document.getElementById("btnLoadLabels");
                 if (btn) {
@@ -679,7 +681,7 @@
 
                 const labels = document.querySelectorAll('.session-label');
                 const queue = Array.from(labels).filter(l => !l.dataset.loaded);
-                
+
                 // Process in small chunks to avoid flooding
                 const CHUNK_SIZE = 5;
                 for (let i = 0; i < queue.length; i += CHUNK_SIZE) {
@@ -687,12 +689,12 @@
                     await Promise.all(chunk.map(async (el) => {
                         const id = el.dataset.groupId;
                         if (!id) return;
-                        
+
                         try {
                             // Call our proxy script
                             const res = await fetch(`scheduled_unit_sessions.php?id=${id}`);
                             const json = await res.json();
-                            
+
                             // Expecting json to be an array of sessions. 
                             // We grab the first 'session_subject' that matches? 
                             // Or just the first one if it's the group ID.
@@ -711,12 +713,12 @@
                         }
                     }));
                 }
-                
+
                 if (btn) {
                     btn.disabled = false;
                     btn.innerHTML = `<i class="bi bi-check-circle-fill me-1"></i> Done`;
                     setTimeout(() => {
-                         btn.innerHTML = `<i class="bi bi-tags-fill me-1"></i> Load Names`;
+                        btn.innerHTML = `<i class="bi bi-tags-fill me-1"></i> Load Names`;
                     }, 3000);
                 }
             }
