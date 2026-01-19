@@ -282,9 +282,17 @@ function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$uni
         $groupKey = "$campus|$lecturerName";
 
         if (!isset($counts[$unitCode][$block]['groups'][$groupKey])) {
-            $counts[$unitCode][$block]['groups'][$groupKey] = 0;
+            $counts[$unitCode][$block]['groups'][$groupKey] = [
+                'id' => $scheduledUnitId ?: 0, // Best effort ID
+                'campus' => $campus,
+                'lecturer' => $lecturerName,
+                'enrolled_count' => 0,
+                'capacity' => $maxParticipants,
+                'is_synthetic' => false,
+                'unit_code' => $unitCode
+            ];
         }
-        $counts[$unitCode][$block]['groups'][$groupKey]++;
+        $counts[$unitCode][$block]['groups'][$groupKey]['enrolled_count']++;
     }
 }
 
@@ -362,30 +370,17 @@ if ($reportResult === null) {
 
     $processedRows = $fetchResult;
 
-    // FORMAT GROUPS FOR FRONTEND
-    $detailedGroups = [];
-    foreach ($counts as $u => $blocks) {
-        foreach ($blocks as $b => $data) {
-            foreach ($data['groups'] as $key => $count) {
-                // Key is "Campus|Lecturer"
-                list($camp, $lec) = explode('|', $key, 2);
-
-                $grp = [
-                    'unit_code' => $u,
-                    'block' => $b,
-                    'campus' => $camp,     // FIX: Explicitly set campus
-                    'lecturer' => $lec,    // FIX: Explicitly set lecturer
-                    'enrolled_count' => $count,
-                ];
-
-                if (!isset($detailedGroups[$u]))
-                    $detailedGroups[$u] = [];
-                if (!isset($detailedGroups[$u][$b]))
-                    $detailedGroups[$u][$b] = [];
-                $detailedGroups[$u][$b][] = $grp;
+    // FIX: Convert 'groups' from associative array (Campus|Lecturer) to indexed array for frontend
+    foreach ($counts as $u => &$blocks) {
+        foreach ($blocks as $b => &$bData) {
+            if (isset($bData['groups']) && is_array($bData['groups'])) {
+                $bData['groups'] = array_values($bData['groups']);
             }
         }
     }
+    unset($blocks, $bData);
+
+    $detailedGroups = $counts; // aliases
 
     $reportResult = [
         'unique_student_count' => count($uniqueStudents),
