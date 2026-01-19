@@ -28,7 +28,7 @@ jobs:
           port: 21
           # server-dir: ./
           passive: false
-          server-dir: ./httpdocs/student-numbers/test/
+          server-dir: ./httpdocs/public/student-numbers/test/
           exclude: |
             **/.git*
             **/.git*/**
