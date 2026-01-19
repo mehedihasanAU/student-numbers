@@ -141,6 +141,9 @@ function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$uni
     $supFirst = null;
     $supLast = null;
 
+    $unitGroupId = null;
+    $classNo = null;
+
     foreach ($row as $k => $v) {
         $kNorm = strtolower(str_replace(['_', ' '], '', $k));
 
@@ -153,6 +156,11 @@ function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$uni
         }
         if ($kNorm === 'id' || $kNorm === 'scheduledunitid')
             $scheduledUnitId = $v;
+
+        if ($kNorm === 'unitgroupid')
+            $unitGroupId = $v;
+        if ($kNorm === 'classno')
+            $classNo = $v;
 
         if (strpos($kNorm, 'enrolmentstatus') !== false && strpos($kNorm, 'unit') !== false)
             $status = $v;
