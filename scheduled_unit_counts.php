@@ -30,7 +30,7 @@ $force = (isset($_GET['force']) && $_GET['force'] == "1");
 
 // -------------------- 1. STREAMING PARSER --------------------
 
-function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$unitMeta, &$uniqueStudents, &$uniqueRisks, &$studentRisks)
+function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$unitMeta, &$uniqueStudents, &$uniqueRisks, &$studentRisks, &$retentionTemp)
 {
 
     $ctx = stream_context_create([
@@ -92,7 +92,8 @@ function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$uni
                             $unitMeta,
                             $uniqueStudents,
                             $uniqueRisks,
-                            $studentRisks
+                            $studentRisks,
+                            $retentionTemp
                         );
                     }
                     $buffer = '';
@@ -105,7 +106,7 @@ function processStreamAndCount($url, $user, $pw, &$counts, &$statusCounts, &$uni
     return $processedRows;
 }
 
-function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$unitMeta, &$uniqueStudents, &$uniqueRisks, &$studentRisks)
+function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$unitMeta, &$uniqueStudents, &$uniqueRisks, &$studentRisks, &$retentionTemp)
 {
     if (!is_array($row))
         return;
@@ -258,7 +259,8 @@ function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$uni
                     'name' => trim($firstName . ' ' . $lastName),
                     'risk' => $riskString,
                     'unit' => 'Multiple/All',
-                    'campus' => $campus
+                    'campus' => $campus,
+                    'course' => $courseName // Added course
                 ];
             }
         }
@@ -291,6 +293,11 @@ function processSingleRow($row, &$processedRows, &$counts, &$statusCounts, &$uni
                 'is_synthetic' => false,
                 'unit_code' => $unitCode
             ];
+            if ($studentId && $block && $block !== "Unknown Block") {
+                if (!isset($retentionTemp[$block]))
+                    $retentionTemp[$block] = [];
+                $retentionTemp[$block][$studentId] = true;
+            }
         }
         $counts[$unitCode][$block]['groups'][$groupKey]['enrolled_count']++;
     }
@@ -347,6 +354,7 @@ if ($reportResult === null) {
     $uniqueStudents = [];
     $uniqueRisks = [];
     $studentRisks = [];
+    $retentionTemp = [];
 
     $apiUrl = $reportUrl . "&report_format=JSON&report_from_url=1&limit=100000";
 
@@ -359,7 +367,8 @@ if ($reportResult === null) {
         $unitMeta,
         $uniqueStudents,
         $uniqueRisks,
-        $studentRisks
+        $studentRisks,
+        $retentionTemp
     );
 
     if (is_array($fetchResult) && isset($fetchResult['error'])) {
@@ -390,7 +399,8 @@ if ($reportResult === null) {
         'meta' => $unitMeta,
         'student_risks' => $studentRisks,
         'detailed_groups' => $detailedGroups,
-        'processed_rows' => $processedRows
+        'processed_rows' => $processedRows,
+        'retention_data' => array_map('array_keys', $retentionTemp)
     ];
 
     if ($processedRows > 0) {
@@ -477,7 +487,8 @@ echo json_encode([
     "groups" => $groups,
     "detailed_groups" => $reportResult['detailed_groups'] ?? [],
     "campus_breakdown_detail" => $reportResult['detailed_groups'] ?? [], // LEAGCY SUPPORT
-    "risk_data" => $reportResult['student_risks'] ?? []
+    "risk_data" => $reportResult['student_risks'] ?? [],
+    "retention_data" => $reportResult['retention_data'] ?? []
 ], JSON_UNESCAPED_SLASHES);
 
 
