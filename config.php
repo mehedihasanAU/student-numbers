@@ -24,5 +24,6 @@ return [
         '2026-09-07', // Block 6
         '2026-10-12', // Block 7
         '2026-11-16', // Block 8
-    ]
+    ],
+    'admin_password' => 'Admin2026!' // Simple shared request
 ];
