@@ -408,11 +408,15 @@ $groups = [];
 foreach ($unitList as $id => $payload) {
     if (!$id)
         continue;
-    $unitCode = $payload["scheduledUnitCode"] ?? ($payload["unitCode"] ?? "Unknown");
-    $campus = $payload["campus"] ?? ($payload["location"] ?? "Unknown");
-    $startDate = $payload["startDate"] ?? null;
-    $endDate = $payload["endDate"] ?? null;
-    $currentParticipants = isset($payload["currentParticipants"]) ? intval($payload["currentParticipants"]) : 0;
+
+    // Robust Key Handling (API return casing varies)
+    $p = array_change_key_case($payload, CASE_LOWER);
+
+    $unitCode = $p["scheduledunitcode"] ?? ($p["unitcode"] ?? "Unknown");
+    $campus = $p["campus"] ?? ($p["location"] ?? ($p["homeinstitutioncode"] ?? "Unknown"));
+    $startDate = $p["startdate"] ?? null;
+    $endDate = $p["enddate"] ?? null;
+    $currentParticipants = isset($p["currentparticipants"]) ? intval($p["currentparticipants"]) : 0;
 
     $startYmd = paradigmTsToYmd($startDate);
     $endYmd = paradigmTsToYmd($endDate);
@@ -430,7 +434,7 @@ foreach ($unitList as $id => $payload) {
 
 echo json_encode([
     "generated_at" => gmdate("c"),
-    "unique_students" => $reportResult['unique_student_count'] ?? 0,
+    "unique_student_count" => $reportResult['unique_student_count'] ?? 0, // FIXED KEY
     "status_counts" => $reportResult['status_counts'] ?? [],
     "groups" => $groups,
     "detailed_groups" => $reportResult['detailed_groups'] ?? [],
