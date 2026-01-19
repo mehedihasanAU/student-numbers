@@ -232,7 +232,7 @@ require_once __DIR__ . '/auth.php';
     <div id="loader" class="loader-overlay">
         <div class="spinner"></div>
         <div class="loading-text">Loading Data...</div>
-        <div class="loading-subtext" id="loadingMsg">Waking up the server...</div>
+        <div class="loading-subtext" id="loadingMsg">Waking up the Paradigm, Golden Source of Truth...</div>
         <div class="fw-semibold text-success mt-2 small" id="pendingCount"></div>
     </div>
 
